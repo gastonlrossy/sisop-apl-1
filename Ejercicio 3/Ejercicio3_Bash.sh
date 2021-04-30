@@ -1,4 +1,4 @@
-#!/bin/bas
+#!/bin/bash
 
 #####                   APL Nº1                 #####
 #####		    Ejercicio 3 - Entrega           #####
@@ -19,33 +19,38 @@ if [[ $# != 6 && $# != 1 ]]; then
         exit
 fi
 
-while getopts "h' help' ?' o: u: d: " o; do
+while getopts "h' help' ?' DirectorioSalida: Directorio: Umbral:" o; do
     case "${o}" in
 
-        u) 
+        Umbral) 
             umbral=$OPTARG
-            ;;
+            echo "umbral va bien"
+        ;;
 
-        d)
+        DirectorioSalida)
             if [[ ! -d $OPTARG || ! -r $OPTARG || ! -w $OPTARG ]]; then
                     echo "El directorio de destino no puede ser escrito/leido..."
                     exit
             fi
-            directorioDestino=$OPTARG  
+            echo "destino va bien"
+            directorioDestino=$OPTARG
         ;;
         
-        o)
+        Directorio)
             if [[ ! -d $OPTARG || ! -r $OPTARG ]]; then
                     echo "El directorio de origen no puede ser leido..."
                     exit
             fi
+            echo "origen va bien"
             directorioOrigen=$OPTARG
         ;;
 
         *)
             if [[ $1 == '-h' || $1 == '-help' || $1 == '-?' ]]; then
-                    echo "El archivo se ejecuta ingresando: -o 'archivoOrigen', -d 'archivoDestino', -u 'umbralKB'"
-                    echo "Ejemplo: bash $0 -o Origen -d Destino - u 0"
+                    echo
+                    echo "El archivo se ejecuta ingresando: -Directorio 'archivoOrigen', -DirectorioSalida 'archivoDestino', -Umbral 'umbralKB'"
+                    echo "Ejemplo: bash $0 -Directorio Origen -DirectorioSalida Destino - Umbral 0"
+                    echo
                     exit
             else
                     echo "Parametro incorrecto, ejecute -h, -help o -? para mas info..."
@@ -108,7 +113,7 @@ function escriboRepeticiones(){
                             printf "\n" >> "$2/Resultado_["$diaEjecucion""$horaEjecucion"].out"
                         else
                             path=${x/'./'/"$(pwd ${archivos[i]})/"}
-                            printf "%-30s %-30s\n" "${x//*'/'}" "${path%/*}" >> "$2/Resultado_["$diaEjecucion""$horaEjecucion"].out"
+                            printf "%-30s %-30s\n" "${x//*'/'}" "${path%/*}" >> "$2/Resultado_"$diaEjecucion""$horaEjecucion".out"
                     fi
                 done
 }
