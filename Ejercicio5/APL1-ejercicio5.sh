@@ -68,6 +68,17 @@ resumen=$(awk '
   # echo "ASDASD: " ${!ARRAY[*]}
   echo "ASDASD: " ${#ARRAY[*]}
 
+
+  json_vacio=$(jo -a < /dev/null)
+
+  echo $json_vacio > $HOME"/vacio.json"
+
+  mmm=$( jo actas=:$HOME"/vacio.json" )
+
+  echo $mmm > $HOME"/vacio.json"
+  
+  echo "uwu2 :: " $mmm
+
 for (( c=0; c<${#ARRAY[*]}; c+=2 )); do
 
     nota=${ARRAY[$c + 1]}
@@ -80,52 +91,77 @@ for (( c=0; c<${#ARRAY[*]}; c+=2 )); do
 
     echo "obj_alumno:: " $obj_alumno
     
-    asd="`grep -o "${ARRAY[$c]}" "$HOME/falopita.json" | wc -l`"
+    asd="`grep -o "${ARRAY[$c]}" "$HOME/vacio.json" | wc -l`"
+    # asd="`grep -o "${ARRAY[$c]}" "$HOME/falopita.json" | wc -l`"
 
     echo "es hoy es hoyy:: " $asd
 
     if test $asd -eq 0; then
       echo "No existe el alumno, lo tengo q crear"
       por_favor=$( jq --argjson alumno $obj_alumno \
-                      '.actas[.actas | length] += $alumno' "$HOME/falopita.json" )
+                      '.actas[.actas | length] += $alumno' "$HOME/vacio.json" )
+                      # '.actas[.actas | length] += $alumno' "$HOME/falopita.json" )
     else
       echo "Existe, tengo q agregar nota"
       por_favor=$( jq --argjson dni ${ARRAY[$c]} \
                       --argjson nota_alumno "$obj_nota" \
-                      '.actas[] | select(.dni==$dni).notas += [$nota_alumno]' "$HOME/falopita.json" )
+                      '.actas[] | select(.dni==$dni).notas += [$nota_alumno]' "$HOME/vacio.json" )
+                      # '.actas[] | select(.dni==$dni).notas += [$nota_alumno]' "$HOME/falopita.json" )
     fi
 
     echo "por_favor:: " $por_favor
 
     por_favor_arr=$( jq -s '.' <<< $por_favor)
 
-    echo $por_favor_arr > $HOME"/arr_alumnos.json" # idealmente seria bueno no necesitar fuardarlo en un file
+    echo $por_favor_arr > $HOME"/arr_alumnos.json" # idealmente seria bueno no necesitar guardarlo en un file
 
-    mmm=$( jo actas=:$HOME"/arr_alumnos.json" ) # para no necesitar guardarlo en un fail, tendria q poder consumirlo acá
+    mmm2=$( jo actas=:$HOME"/arr_alumnos.json" ) # para no necesitar guardarlo en un file, tendria q poder consumirlo acá
 
-    echo "uwu :: " $mmm
+    echo $mmm2 > $HOME"/vacio.json"
+
+    echo "uwu :: " $mmm2
 
     # echo $JSON_STRING > $HOME"/falopita.json" # para guardar archivo
 done
 
 
-
+# DEBERIA HACER:
 # { "actas": [
 #  {
-#     "dni": "40227531",
+#     "dni": "42353607",
 #     "notas": [
-#       { "materia": 1115, "nota": 8 },
-#       { "materia": 1116, "nota": 2 }
+#       { "materia": 6666, "nota": 10 }
 #     ]
 #  },
 #   {
-#     "dni": "87654321",
+#     "dni": "45123321",
 #     "notas": [
-#       { "materia": 1116, "nota": 9 },
-#       { "materia": 1118, "nota": 7 }
+#       { "materia": 6666, "nota": 3.75 }
 #     ]
 #  }
 # ] }
+
+# HACE :()
+{
+  "actas": [
+    {
+      "actas": [
+        {
+          "dni": 42353607,
+          "notas": [
+            { "materia": 6666, "nota": 10 }
+          ]
+        }
+      ]
+    },
+    {
+      "dni": 45123321,
+      "notas": [
+        { "materia": 6666, "nota": 3.75 }
+      ]
+    }
+  ]
+}
 
 
 

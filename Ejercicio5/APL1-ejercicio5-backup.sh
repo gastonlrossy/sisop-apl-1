@@ -20,7 +20,7 @@
 #$2 # -> ruta del archivo a json a generar
 
 #validar parámetros (existencia de rutas y permisos, cantidad de parámetros).   DONE
-
+clear
 if ! [ -d "$1" ]; then
     echo "${1} no es un directorio valido."
     exit
@@ -65,42 +65,64 @@ resumen=$(awk '
   IFS=' '
 
   read -ra ARRAY <<<"$resumen"
-  echo "ASDASD: " ${!ARRAY[*]}
+  # echo "ASDASD: " ${!ARRAY[*]}
   echo "ASDASD: " ${#ARRAY[*]}
+
+
+  json_vacio=$(jo -a < /dev/null)
+
+  echo $json_vacio > $HOME"/vacio.json"
+
+  mmm=$( jo actas=:$HOME"/vacio.json" )
+
+  echo $mmm > $HOME"/vacio.json"
+  
+  echo "uwu2 :: " $mmm
 
 for (( c=0; c<${#ARRAY[*]}; c+=2 )); do
 
-    echo "Oh see perro::  " $MATERIA "  " ${ARRAY[$c]} "  " ${ARRAY[$c + 1]}
-    # obj_nota=$( jo materia="$MATERIA" nota=${ARRAY[$c + 1]} )
-    # obj_alumno=$( jo dni=${ARRAY[$c]} notas[]=$obj_nota)
+    nota=${ARRAY[$c + 1]}
+    # echo "Oh see perro::  " $MATERIA "  " ${ARRAY[$c]} "  " ${ARRAY[$c + 1]}
+    obj_nota=$( jo materia="$MATERIA" nota=$nota )
+    obj_alumno=$( jo dni=${ARRAY[$c]} notas[]=$obj_nota)
+
+    # obj_nota2=$( jo materia="puto" nota="8rey" )
+    # obj_alumno2=$( jo dni="ahhsocurioso" notas[]=$obj_nota2)
+
+    echo "obj_alumno:: " $obj_alumno
+    
+    asd="`grep -o "${ARRAY[$c]}" "$HOME/vacio.json" | wc -l`"
+    # asd="`grep -o "${ARRAY[$c]}" "$HOME/falopita.json" | wc -l`"
+
+    echo "es hoy es hoyy:: " $asd
+
+    if test $asd -eq 0; then
+      echo "No existe el alumno, lo tengo q crear"
+      por_favor=$( jq --argjson alumno $obj_alumno \
+                      '.actas[.actas | length] += $alumno' "$HOME/vacio.json" )
+                      # '.actas[.actas | length] += $alumno' "$HOME/falopita.json" )
+    else
+      echo "Existe, tengo q agregar nota"
+      por_favor=$( jq --argjson dni ${ARRAY[$c]} \
+                      --argjson nota_alumno "$obj_nota" \
+                      '.actas[] | select(.dni==$dni).notas += [$nota_alumno]' "$HOME/vacio.json" )
+                      # '.actas[] | select(.dni==$dni).notas += [$nota_alumno]' "$HOME/falopita.json" )
+    fi
+
+    echo "por_favor:: " $por_favor
+
+    por_favor_arr=$( jq -s '.' <<< $por_favor)
+
+    echo $por_favor_arr > $HOME"/arr_alumnos.json" # idealmente seria bueno no necesitar fuardarlo en un file
+
+    mmm=$( jo actas=:$HOME"/arr_alumnos.json" ) # para no necesitar guardarlo en un fail, tendria q poder consumirlo acá
+
+    echo $mmm > $HOME"/vacio.json"
+
+    echo "uwu :: " $mmm
+
+    # echo $JSON_STRING > $HOME"/falopita.json" # para guardar archivo
 done
-
-
-obj_nota=$( jo materia="$MATERIA" nota=10 )
-obj_nota2=$( jo materia="$MATERIA" nota=7 )
-
-
-obj_alumno=$( jo dni="40227531" notas[]=$obj_nota)
-obj_alumno2=$( jo dni="41216181" notas[]=$obj_nota)
-
-JSON_STRING=$( jo actas[]=$obj_alumno actas[]=$obj_alumno2 )
-
-echo "obj_nota:: " $obj_nota
-echo "obj_alumno:: " $obj_alumno
-echo "obj_alumno2:: " $obj_alumno2
-
-# echo $JSON_STRING > $HOME"/falopita.json" # para guardar archivo
-
-
-por_favor=$( jq  --argjson nota_alumno $obj_nota2 '.actas[] | select(.dni == 40227531).notas += [$nota_alumno]' "$HOME/falopita.json" )
-
-por_favor_arr=$( jq -s '.' <<< $por_favor)
-
-echo $por_favor_arr > $HOME"/arr_alumnos.json"
-
-mmm=$( jo actas=:$HOME"/arr_alumnos.json" )
-
-echo "uwu :: " $mmm
 
 
 
