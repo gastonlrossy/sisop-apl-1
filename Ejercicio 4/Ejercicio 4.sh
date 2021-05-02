@@ -1,16 +1,21 @@
 #!/bin/bash
 
+#####                   APL Nº1                 #####
+#####		    Ejercicio 4 - Entrega           #####
+#####			    Ejercicio 4.sh		        #####
 
+#####				  GRUPO N°2		            #####
+#####       41.915.248 - Zella, Ezequiel        #####
+#####       41.292.382 - Cencic, Maximiliano    #####
+#####       40.538.404 - Bonvehi, Sebastian     #####
+#####       40.137.778 - Rossy, Gastón Lucas    #####
+#####       40.227.531 - Tebes, Leandro  	    #####
 
+KILL_PROCESS=false
+BACKGROUND=false
 
-# ------------------------------------------- Validaciones y mètodos ------------------------------------------- #
-
-MATAR_PROCESO=false
-SEG_PLANO=false
-
-#Metodo de ayuda.
 help(){
-    echo "El script se usa de la siguiente manera: ""$0"" -d [Directorio a monitorear] -o [Directorio destino] (este ùltimo es opcional) "
+    echo "El script se usa de la siguiente manera: ""$0"" -d Directorio a monitorear -o Directorio destino "
     echo "Sino se pasa el parametro -o el directorio destino es el directorio a monitorear "
     echo "La ejecucion del script de esta manera ""$0"" -s permite la detencion del demonio "
     echo "No se puede ejecutar el script si se reliza el llamado del parametro '-s' junto con '-d' y '-o'"
@@ -21,98 +26,88 @@ help(){
     exit
 }
 
-# Valida la existencia y los permisos del path a monitorear.
-validarPathMonitoreo(){
-    if [[ ! -d "$PATH_MONITOREO" || ! -r "$PATH_MONITOREO" ]]; then
-        echo " ""$PATH_MONITOREO"" No es un directorio valido o no tiene los permisos necesarios"
+validatePathFrom(){
+    if [[ ! -d "$PATH_FROM" || ! -r "$PATH_FROM" ]]; then
+        echo " ""$PATH_FROM"" No es un directorio valido o no tiene los permisos necesarios"
         help
         exit 1
     fi
 }
 
-matarProceso(){
-    PID_VIEJO=$( ps ax  | grep "${BASH_SOURCE[0]}" | head -n 1 | awk '{print $1}' )
-    eval "$( kill -9 "$PID_VIEJO" )"
-    PID_NUEVO=$( ps ax  | grep "${BASH_SOURCE[0]}" | head -n 1 | awk '{print $1}' )
+killProcess(){
+    OLD_PID=$( ps ax  | grep "${BASH_SOURCE[0]}" | head -n 1 | awk '{print $1}' )
+    eval "$( kill -9 "$OLD_PID" )"
+    NEW_PID=$( ps ax  | grep "${BASH_SOURCE[0]}" | head -n 1 | awk '{print $1}' )
     
-    until [ "$PID_NUEVO" == "$PID_VIEJO" ]
+    until [ "$NEW_PID" == "$OLD_PID" ]
         do
-            PID_VIEJO=$( ps ax  | grep "${BASH_SOURCE[0]}" | head -n 1 | awk '{print $1}' )
-            eval "$( kill -9 "$PID_VIEJO" )"
-            PID_NUEVO=$( ps ax  | grep "${BASH_SOURCE[0]}" | head -n 1 | awk '{print $1}' )
+            OLD_PID=$( ps ax  | grep "${BASH_SOURCE[0]}" | head -n 1 | awk '{print $1}' )
+            eval "$( kill -9 "$OLD_PID" )"
+            NEW_PID=$( ps ax  | grep "${BASH_SOURCE[0]}" | head -n 1 | awk '{print $1}' )
         done
     exit 0
 }
 
-# Valida la existencia y los permisos del path destino.
-validarPathDestino(){
-    if [ ! "$PATH_DESTINO" ]; then
-        PATH_DESTINO="$PATH_MONITOREO"
-    elif [[ ! -d "$PATH_DESTINO"  || ! -r "$PATH_DESTINO" || ! -w "$PATH_DESTINO" ]]; then
-        echo """$PATH_DESTINO"" No es un path valida o no tiene los permisos correspondientes"
+validatePathDestiny(){
+    if [ ! "$PATH_DESTINY" ]; then
+        PATH_DESTINY="$PATH_FROM"
+    elif [[ ! -d "$PATH_DESTINY"  || ! -r "$PATH_DESTINY" || ! -w "$PATH_DESTINY" ]]; then
+        echo """$PATH_DESTINY"" No es un path valida o no tiene los permisos correspondientes"
         help
         exit 1
     fi
 }
 
-# Valida si se debe matar el proceso.
-validarMatarProceso(){
-    if [ "$MATAR_PROCESO" = true ]; then
-        matarProceso
+validateKillProcess(){
+    if [ "$KILL_PROCESS" = true ]; then
+        killProcess
     fi
 }
 
-#Crea y mueve los archivos a las carpetas correspondientes.
-crearYmover(){
-
-    if [ "$EXTENSION_ARCHIVO" ]; then
-        if [ ! -d "$PATH_DESTINO/${EXTENSION_ARCHIVO^^}" ]; then
-            eval "$( mkdir "$PATH_DESTINO/${EXTENSION_ARCHIVO^^}" )"
+createAndMove(){
+    if [ "$FILE_EXTENSION" ]; then
+        if [ ! -d "$PATH_DESTINY/${FILE_EXTENSION^^}" ]; then
+            eval "$( mkdir "$PATH_DESTINY/${FILE_EXTENSION^^}" )"
         fi
-        eval "$( mv "$PATH_MONITOREO/$1" "$PATH_DESTINO/${EXTENSION_ARCHIVO^^}" )"
+        eval "$( mv "$PATH_FROM/$1" "$PATH_DESTINY/${FILE_EXTENSION^^}" )"
     else
-        if [ -d "$PATH_DESTINO" ]; then
-        eval "$( mv -i "$PATH_MONITOREO/$1" "$PATH_DESTINO" )"
+        if [ -d "$PATH_DESTINY" ]; then
+        eval "$( mv -i "$PATH_FROM/$1" "$PATH_DESTINY" )"
         fi
     fi
 
 }
 
-#Obtiene la extension de los archivos.
-obtenerExtension(){
-    CONT_PUNTO=0
-    #Obtenes la cantidad de puntos
-    CONT_PUNTO=$( echo "$1" | awk -F"." '{ print NF-1 }' )
-    #Primer caracter
-    PRIMER_LETRA="${1:0:1}"
+getExtensionName(){
+    CONT_POINT=0
+    CONT_POINT=$( echo "$1" | awk -F"." '{ print NF-1 }' )
+    FIRST_CHAR="${1:0:1}"
 
-
-    if [[ "$PRIMER_LETRA" == "." && $CONT_PUNTO == 1 ]]; then
-        EXTENSION_ARCHIVO=""
+    if [[ "$FIRST_CHAR" == "." && $CONT_POINT == 1 ]]; then
+        FILE_EXTENSION=""
     else
-        EXTENSION_ARCHIVO="${1#*.}"
+        FILE_EXTENSION="${1#*.}"
 
-        while [[ "$EXTENSION_ARCHIVO" =~ \. ]]
+        while [[ "$FILE_EXTENSION" =~ \. ]]
         do
-            EXTENSION_ARCHIVO="${EXTENSION_ARCHIVO#*.}"
+            FILE_EXTENSION="${FILE_EXTENSION#*.}"
         done
         
-        if [[ "$EXTENSION_ARCHIVO" == "$1" ]]; then
-            EXTENSION_ARCHIVO=""
+        if [[ "$FILE_EXTENSION" == "$1" ]]; then
+            FILE_EXTENSION=""
         fi
     fi
 }
 
-#Comienza el programa.
-comienzoScript(){
+begin(){
     IFS=$'\n'
     while true
         do
-            for ARCHIVO in $( ls -a "$PATH_MONITOREO" ); 
+            for FILE in $( ls -a "$PATH_FROM" ); 
                 do
-                    if [[ "$ARCHIVO" != "." && "$ARCHIVO" != ".." ]]; then
-                        obtenerExtension "$ARCHIVO"
-                        crearYmover "$ARCHIVO"
+                    if [[ "$FILE" != "." && "$FILE" != ".." ]]; then
+                        getExtensionName "$FILE"
+                        createAndMove "$FILE"
                     fi
                 done
         sleep 10        
@@ -120,58 +115,61 @@ comienzoScript(){
     unset IFS
 }
 
-# Validar parametros -s, -help y -?
+WORDS_HELP=false
 
-OPCIONES_LETRAS_AYUDA=false
+#######    Region de validaciones de parámetros.     #########
 
 if [[ "$@" =~ '-async' ]]; then
-    # Validacion de parametros
     while [ $# -gt 0 ]
         do 
             case "$1" in
                 -async)
-                SEG_PLANO=true 
+                BACKGROUND=true 
                 ;;
             esac
             case "$1" in
                 -d) 
                 shift
-                PATH_MONITOREO="$1" 
+                PATH_FROM="$1"
+                validatePathFrom "$PATH_FROM" 
                 ;;
             esac
             case "$2" in
                 -d) 
                 shift
-                PATH_MONITOREO="$2" 
+                PATH_FROM="$2"
+                validatePathFrom "$PATH_FROM"
                 ;;
             esac
             case "$1" in
                 -o) 
                 shift
-                PATH_DESTINO="$1" 
+                PATH_DESTINY="$1" 
+                validatePathDestiny "$PATH_DESTINY"
                 ;;
             esac
             case "$2" in
                 -o) 
                 shift
-                PATH_DESTINO="$2"
+                PATH_DESTINY="$2"
+                validatePathDestiny "$PATH_DESTINY"
                 ;;
             esac
             case "$1" in
                 -s)
                 shift
                 if [ "$1" != "" ]; then
-                    echo "No se puede enviar parametros al -s"
+                    echo "Error en parametros."
                     help
                     exit
                 fi
-                matarProceso ;;
+                killProcess ;;
             esac
             case "$1" in
                 -help)
                 shift
-                if [ "$1" != "" ]; then
-                    echo "No se puede enviar parametros al -help"
+                if [[ "$1" != "" || $# > 1 ]]; then
+                    echo "Error en parametros."
                     help
                     exit
                 fi
@@ -182,7 +180,7 @@ if [[ "$@" =~ '-async' ]]; then
                 -h)
                 shift
                 if [ "$1" != "" ]; then
-                    echo "No se puede enviar parametros al -h"
+                    echo "Error en parametros."
                     help
                     exit
                 fi
@@ -192,60 +190,61 @@ if [[ "$@" =~ '-async' ]]; then
             shift
     done
 else
-
     if [[ "$#" == 1 && ( "$@" =~ '-help'  ||  "$@" =~ '-?'  || "$@" =~ '-h' ) ]]; then
         help
         exit 0
     fi
 
-    while getopts d:o:s opt; do 
-        case $opt in 
-            d) PATH_MONITOREO=$OPTARG ;;
-            o) PATH_DESTINO=$OPTARG ;;
-            s) matarProceso ;;
-            *) usage ;;
+    while getopts d:o:s opt; do
+        case $opt in
+            o) PATH_DESTINY="$OPTARG"
+                validatePathDestiny "$PATH_DESTINY"
+                ;;
+            d) PATH_FROM="$OPTARG"
+                validatePathFrom "$PATH_FROM"
+                ;;
+            s)
+                if [[ "$OPTARG" != "" || $# > 1 ]]; then
+                    echo "Error en parametros."
+                    help
+                    exit
+                fi
+            killProcess 
+            ;;
+            *) help ;;
         esac 
     done
 
-    if [[ $# > 4 || $# < 1 || ! $PATH_MONITOREO ]] ; then
-        echo "Sintaxis incorrecta"
+    if [[ $# > 4 || $# < 1 || ! "$PATH_FROM" ]] ; then
+        echo "Error en parametros."
         help
         exit
     fi
+
+    if [[ "$PATH_FROM" && ! "$@" =~ '-o' && $# > 2 ]] ; then
+        echo "Error en parametros."
+        help
+        exit
+    fi
+
 fi
 
 if [[ "$@" =~ '-s' || "$@" =~ '-help' || "$@" =~ '-?' ]]; then
-    OPCIONES_LETRAS_AYUDA=true
+    WORDS_HELP=true
 fi
 
-if [[ $# > 1 && "$OPCIONES_LETRAS_AYUDA" = true ]]; then
-    echo "Sintaxis incorrecta"
+if [[ $# > 1 && "$WORDS_HELP" = true ]]; then
+    echo "Error en parametros"
     help
     exit
 fi
 
-# Se valida que si se identica path destino, se tenga el path de monitoreo
-
-# if ! [[ "$@" =~ '-o' || "$@" =~ '-d' || "$@" =~ '-?' || "$@" =~ '-help' || "$@" =~ '-h' || "$@" =~ '-s' ]]; then
-#     echo "Sintaxis incorrecta"
-#     help
-#     exit
-# fi
-
-# if [[ "$@" =~ '-o' && ! "$@" =~ '-d' ]]; then
-#     echo "Error, si se envia el path de destino, se debe enviar el path de monitoreo"
-#     help
-#     exit
-# fi
-
-# ------------------------------------------- Comienzo del script ------------------------------------------- #
-
-if [[ $SEG_PLANO == false && $MATAR_PROCESO == false ]]; then
-    nohup "./${BASH_SOURCE[0]}" "-async" "-d" "$PATH_MONITOREO" "-o" "$PATH_DESTINO" &
+if [[ $BACKGROUND == false && $KILL_PROCESS == false ]]; then
+    nohup "./${BASH_SOURCE[0]}" "-async" "-d" "$PATH_FROM" "-o" "$PATH_DESTINY" &
     exit 0
 fi
 
-validarMatarProceso
-validarPathMonitoreo
-validarPathDestino
-comienzoScript
+validateKillProcess
+validatePathFrom
+validatePathDestiny
+begin
