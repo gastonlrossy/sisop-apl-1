@@ -12,6 +12,21 @@
 #####       40.227.531 - Tebes, Leandro  	    #####
 
 
+unameOut="$(uname -s)"
+case "${unameOut}" in
+    Linux*)     machine="Linux";;
+    MINGW*)     machine="MinGw";;
+    *)          machine="UNKNOWN:${unameOut}"
+esac
+
+if [[ $machine == "Linux" ]]
+then
+    echo `dos2unix $"./$0"`
+elif [[ $machine == "MinGw" ]]
+    then
+        echo `unix2dos $"./$0"`
+fi
+
 IFS=$'\n'
 
 if [[ $# != 6 && $# != 1 ]]; then
