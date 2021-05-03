@@ -186,4 +186,4 @@ if [[ $INPUT_FILE == *"../"* ]]; then
     
 fi
 
-zip -m "$HOME/Papelera" $INPUT_FILE
+zip -m "$HOME/Recycle Bin" $INPUT_FILE
