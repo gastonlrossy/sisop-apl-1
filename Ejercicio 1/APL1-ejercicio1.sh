@@ -14,6 +14,21 @@
 
 # Si la sintaxis esperada del script es invalida, 
 #  se imprime por stdout la salida esperada.
+unameOut="$(uname -s)"
+case "${unameOut}" in
+    Linux*)     machine="Linux";;
+    MINGW*)     machine="MinGw";;
+    *)          machine="UNKNOWN:${unameOut}"
+esac
+
+if [[ $machine == "Linux" ]]
+then
+    echo `dos2unix $"./$0"`
+elif [[ $machine == "MinGw" ]]
+    then
+        echo `unix2dos $"./$0"`
+fi
+
 validarSintaxis() {
     echo "Error. La sintaxis esperada del script es la siguiente:"
     echo $0 "<directorio> <cantidad>"
