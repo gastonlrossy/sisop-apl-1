@@ -65,17 +65,22 @@ validateKillProcess(){
 }
 
 createAndMove(){
-    if [ "$FILE_EXTENSION" ]; then
+  if [ "$FILE_EXTENSION" ]; then
         if [ ! -d "$PATH_DESTINY/${FILE_EXTENSION^^}" ]; then
             eval "$( mkdir "$PATH_DESTINY/${FILE_EXTENSION^^}" )"
         fi
+        if [[ "$PATH_DESTINY/${FILE_EXTENSION^^}/$1" ]]; then
+            eval "$( rm "$PATH_DESTINY/${FILE_EXTENSION^^}/$1" )"
+        fi
         eval "$( mv "$PATH_FROM/$1" "$PATH_DESTINY/${FILE_EXTENSION^^}" )"
     else
-        if [ -d "$PATH_DESTINY" ]; then
-        eval "$( mv -i "$PATH_FROM/$1" "$PATH_DESTINY" )"
+        if [[ "$PATH_DESTINY" != "$PATH_FROM" ]]; then
+            if [[ "$PATH_DESTINY/$1" ]]; then
+                eval "$( rm "$PATH_DESTINY/$1" )"
+            fi
+            eval "$( mv -i "$PATH_FROM/$1" "$PATH_DESTINY" )"
         fi
     fi
-
 }
 
 getExtensionName(){
@@ -240,7 +245,7 @@ if [[ $# > 1 && "$WORDS_HELP" = true ]]; then
 fi
 
 if [[ $BACKGROUND == false && $KILL_PROCESS == false ]]; then
-    nohup "./${BASH_SOURCE[0]}" "-async" "-d" "$PATH_FROM" "-o" "$PATH_DESTINY" &
+    nohup "./${BASH_SOURCE[0]}" "-async" "-d" "$PATH_FROM" "-o" "$PATH_DESTINY" &>/dev/null &
     exit 0
 fi
 

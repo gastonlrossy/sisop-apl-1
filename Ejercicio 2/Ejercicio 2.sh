@@ -13,7 +13,7 @@
 
 abs(){
     local number="$(( "$1" < 0 ? -1 : 1 ))"
-    local returnValue=$(($1 * $number))
+    local returnValue=$(("$1" * "$number"))
     return $returnValue 
 }
 
@@ -36,8 +36,8 @@ print(){
     cont2="$(grep -o ')' "$archivo" | wc -l)"
     resultadoResta=$(("$cont1" - "$cont2"))
     contadorIncons=$(("$contadorIncons" + "${resultadoResta#-}"))
-    echo  "Cantidad de cambios realizados: $1" > "$pathArchi/${archivo%.*}_$fecha.log"
-    echo  "Cantidad de inconsistencias: $contadorIncons" >> "$pathArchi/${archivo%.*}_$fecha.log"
+    echo  "Cantidad de cambios realizados: $1" > "$pathArchi${archivo%.*}_$fecha.log"
+    echo  "Cantidad de inconsistencias: $contadorIncons" >> "$pathArchi${archivo%.*}_$fecha.log"
 }
 
 help(){
@@ -55,7 +55,7 @@ then
 fi
 
 ## Sirve para validar si el argumento empieza con guió medio ##
-if ! [[ $1 =~ ^[-] ]]; then
+if  [[ ! ($1 =~ ^[-]) ]] || [[ ${1#*-} == '' ]]; then
     echo "No corresponde con un parametro valido"
     help
     exit
@@ -80,9 +80,21 @@ while getopts "?'help'h'i:in:" op; do
         fi
         
         archivoDeEntrada="$2"
-        
-        ##De cualquier path siempre obtengo el path absoluto##
-        archivoDeEntrada=${archivoDeEntrada/'../'/"$(pwd "$archivoDeEntrada")/"}
+        PATH_BASE=$( pwd "$archivoDeEntrada" )
+
+        if [[ "$archivoDeEntrada" == *"../"* ]]; then
+            COMMAND_AWK="$(awk -F"../" '{print NF-1}' <<< "${archivoDeEntrada}" )"
+            COMMAND_PATH_BASE=$( pwd "$PATH_BASE" )
+
+        for (( i=0; i<"$COMMAND_AWK" ; i++ ))
+            do
+                archivoDeEntrada="${archivoDeEntrada##*/}"
+                COMMAND_PATH_BASE=$( dirname -- "$COMMAND_PATH_BASE")
+        done
+        archivoDeEntrada="$COMMAND_PATH_BASE"'/'"$archivoDeEntrada"
+        elif [[ "$archivoDeEntrada" != *"$PATH_BASE"* ]]; then
+            archivoDeEntrada=$( pwd "$PATH_BASE")/"$archivoDeEntrada" #Con esta linea se obtiene el PATH absoluto
+        fi
     ;;
     *)
         if [[ "$1" == '-h' || "$1" == '-help' || "$1" == '-?' ]] 
@@ -102,8 +114,11 @@ IFS=$'\n'
 soloArchivo=${archivoDeEntrada//*'/'}
 fecha=$(date +"%Y%m%d%H%M" )
 nombre="${soloArchivo%.*}" 
-extension=${soloArchivo#*.}
-pathArchi=${archivoDeEntrada%/*}
+extension="${soloArchivo#*.}"
+pathArchi=${archivoDeEntrada%/*}/
+if [[ $pathArchi == *"$nombre"* ]]; then
+    pathArchi="${pathArchi#*/}"
+fi
 contadorCambios=0 
 
 for lineaArchivo in $( cat "$archivoDeEntrada" )
@@ -129,7 +144,7 @@ for lineaArchivo in $( cat "$archivoDeEntrada" )
         abs $aux
         aux=$?
         contadorCambios=$(("$contadorCambios" + "$aux"))
-        echo  "$lineaCambio" >> "$pathArchi/$nombre""$fecha.$extension"
+        echo  "$lineaCambio" >> "$pathArchi$nombre""_$fecha.$extension"
     done
 
 unset IFS
