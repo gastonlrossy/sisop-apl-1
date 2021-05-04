@@ -48,7 +48,7 @@ validateIfRecycleBinIsEmpty(){
 
 recover(){
     ORIGINAL_PATH="$1"
-    ENTIRE_NAME="${1##*/}"
+    ENTIRE_NAME=`basename "$1"`
     cd $HOME
     unzip -p "$HOME/Recycle_Bin.zip" "$ORIGINAL_PATH" >"$ENTIRE_NAME"
     DIRNAME="$(dirname -- $ORIGINAL_PATH)"
@@ -57,17 +57,19 @@ recover(){
 }
 
 recoverFile(){
+    
     FILE_NAME="$1"
     LIST=$(zipinfo -1 $HOME/Recycle_Bin.zip)
     COUNTER=1
     
     MATCHING_FILES=()
-    IFS=$'\n'
 
+    IFS=$'\n'
     for d in $LIST; do
-        NAME="${d##*/}"
+        NAME=`basename "$d"`
         if [[ "$NAME" = "$FILE_NAME" ]]; then
             MATCHING_FILES[$(( $COUNTER - 1))]="$d"
+            echo $COUNTER '-' "$NAME" "/$(dirname -- "$d")"
             COUNTER=$(($COUNTER + 1))
         fi
     done
@@ -82,7 +84,7 @@ recoverFile(){
     echo "¿Qué archivo quiere recuperar? "
     read OPTION
 
-    while [ [ $OPTION -gt $(($COUNTER - 1)) ] ]; do
+    while [[ $OPTION -gt $(($COUNTER - 1)) ]]; do
         echo "Opcion invalida. ¿Qué archivo desea recuperar? "
         read OPTION
     done
@@ -93,7 +95,7 @@ recoverFile(){
     fi
     
     INDEX=$(($OPTION - 1))
-    recover ${MATCHING_FILES[$INDEX]}
+    recover "${MATCHING_FILES[$INDEX]}"
 }
 
 printFiles(){
@@ -106,9 +108,9 @@ printFiles(){
 
     if  zipinfo -t "$RECYCLE_BIN" > /dev/null ; then
         for d in $LIST; do
-            NAME="${d##*/}"
-            if [[ ! -z $NAME ]]; then
-                printf "%-40s %-70s\n" "$NAME" "/$(dirname -- $d)"
+            NAME=`basename "$d"`
+            if [[ ! -z "$NAME" ]]; then
+                printf "%-40s %-70s\n" "$NAME" "/$(dirname -- "$d")"
             fi
         done
     else
@@ -183,7 +185,7 @@ if test $# -eq 0; then
 fi
 
 INPUT_FILE="$1"
-NOMBRE="${INPUT_FILE##*/}"
+NOMBRE=`basename "$INPUT_FILE"`
 PATH_BASE=$PWD
 
 if [[ $INPUT_FILE == *"../"* ]]; then
@@ -192,7 +194,7 @@ if [[ $INPUT_FILE == *"../"* ]]; then
     
     for (( i=0; i<$AWK ; i++ ))
     do
-        INPUT_FILE="${INPUT_FILE##*/}"
+        INPUT_FILE=`basename "$INPUT_FILE"`
         PATH_BASE=` dirname -- $PATH_BASE`
     done
     INPUT_FILE=$PATH_BASE'/'"$INPUT_FILE"
@@ -201,4 +203,4 @@ elif [[ $INPUT_FILE != *$PATH_BASE* ]]; then
     
 fi
 
-zip -m "$HOME/Recycle_Bin.zip" $INPUT_FILE
+zip -m "$HOME/Recycle_Bin.zip" "$INPUT_FILE"
