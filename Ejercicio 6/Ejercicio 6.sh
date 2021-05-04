@@ -11,21 +11,6 @@
 #####       Cencic, Maximiliano - 41.292.382    #####
 #####       Bonvehi, Sebastian - 40.538.404     #####
 
-unameOut="$(uname -s)"
-case "${unameOut}" in
-    Linux*)     machine="Linux";;
-    MINGW*)     machine="MinGw";;
-    *)          machine="UNKNOWN:${unameOut}"
-esac
-
-if [[ $machine == "Linux" ]]
-then
-    echo `dos2unix $"./$0"`
-elif [[ $machine == "MinGw" ]]
-    then
-        echo `unix2dos $"./$0"`
-fi
-
 help(){
     echo "El script se forma con estas opciones de ejecución:"
     echo " -l lista los archivos que contiene la papelera de reciclaje, dando la informacion del nombre de archivo y la ubicación donde se encuentra"
