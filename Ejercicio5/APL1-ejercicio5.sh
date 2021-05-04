@@ -13,7 +13,20 @@
 #####       Bonvehi, Sebastian - 40.538.404     #####
 
 
+unameOut="$(uname -s)"
+case "${unameOut}" in
+    Linux*)     machine="Linux";;
+    MINGW*)     machine="MinGw";;
+    *)          machine="UNKNOWN:${unameOut}"
+esac
 
+if [[ $machine == "Linux" ]]
+then
+    echo `dos2unix $"./$0"`
+elif [[ $machine == "MinGw" ]]
+    then
+        echo `unix2dos $"./$0"`
+fi
 
 
 #$1 # -> directorio con los .csv
