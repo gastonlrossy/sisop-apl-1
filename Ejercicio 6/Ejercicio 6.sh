@@ -46,9 +46,9 @@ validateIfRecycleBinIsEmpty(){
     fi
 }
 
-recover(){
+recoverF(){
     ORIGINAL_PATH="$1"
-    ENTIRE_NAME=`basename "$1"`
+    ENTIRE_NAME="${1##*/}"
     cd $HOME
     unzip -p "$HOME/Recycle_Bin.zip" "$ORIGINAL_PATH" >"$ENTIRE_NAME"
     DIRNAME="$(dirname -- $ORIGINAL_PATH)"
@@ -80,22 +80,21 @@ recoverFile(){
         echo "El archivo no se encuentra en la papelera."
         exit
     fi
-    
     echo "¿Qué archivo quiere recuperar? "
-    read OPTION
+    read OPCION
 
-    while [[ $OPTION -gt $(($COUNTER - 1)) ]]; do
+    while [[ $OPCION -gt $(($COUNTER - 1)) ]]; do
         echo "Opcion invalida. ¿Qué archivo desea recuperar? "
-        read OPTION
+        read OPCION
     done
     
-    if test $OPTION -eq 0 ; then
+    if test $OPCION -eq 0 ; then
         echo "No se ha recuperado ningún archivo."
         exit
     fi
     
-    INDEX=$(($OPTION - 1))
-    recover "${MATCHING_FILES[$INDEX]}"
+    INDEX=$(($OPCION - 1))
+    recoverF "${MATCHING_FILES[$INDEX]}"
 }
 
 printFiles(){
@@ -185,7 +184,7 @@ if test $# -eq 0; then
 fi
 
 INPUT_FILE="$1"
-NOMBRE=`basename "$INPUT_FILE"`
+NOMBRE="${INPUT_FILE##*/}"
 PATH_BASE=$PWD
 
 if [[ $INPUT_FILE == *"../"* ]]; then
@@ -194,7 +193,7 @@ if [[ $INPUT_FILE == *"../"* ]]; then
     
     for (( i=0; i<$AWK ; i++ ))
     do
-        INPUT_FILE=`basename "$INPUT_FILE"`
+        INPUT_FILE="${INPUT_FILE##*/}"
         PATH_BASE=` dirname -- $PATH_BASE`
     done
     INPUT_FILE=$PATH_BASE'/'"$INPUT_FILE"
