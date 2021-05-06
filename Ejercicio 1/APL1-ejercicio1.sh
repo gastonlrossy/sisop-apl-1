@@ -14,6 +14,7 @@
 
 # Si la sintaxis esperada del script es invalida, 
 #  se imprime por stdout la salida esperada.
+
 validarSintaxis() {
     echo "Error. La sintaxis esperada del script es la siguiente:"
     echo $0 "<directorio> <cantidad>"

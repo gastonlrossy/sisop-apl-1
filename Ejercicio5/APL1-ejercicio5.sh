@@ -21,6 +21,7 @@ help(){
     echo "Luego, la ejecucion del script es la siguiente:"
     printf "\t$0 --notas <directorio con los archivos .CSV> --salida <directorio + nombre del archivo json a generar>\n\n"
 
+<<<<<<< HEAD
     exit
 }
 
@@ -35,6 +36,18 @@ helpError() {
     printf "\n\t$0 -help"
     printf "\n\t$0 -?\n\n"
 
+=======
+#$1 # -> directorio con los .csv
+#$2 # -> ruta del archivo a json a generar
+
+#validar parámetros (existencia de rutas y permisos, cantidad de parámetros).   DONE
+clear
+if ! [ -d "$1" ]; then
+    echo "${1} no es un directorio valido."
+    exit
+elif ! [ -r "$1" ]; then
+    echo "${1} no posee posee permisos de lectura."
+>>>>>>> 096834ac1c0a82bc84f272ed2f11a9c58e7f5255
     exit
 }
 

@@ -12,7 +12,6 @@
 #####       40.227.531 - Tebes, Leandro  	    #####
 
 
-
 IFS=$'\n'
 
 if [[ $# != 6 && $# != 1 ]]; then
@@ -20,37 +19,37 @@ if [[ $# != 6 && $# != 1 ]]; then
         exit
 fi
 
-while getopts "h' help' ?' D: U:" o; do
-    case $o in
-        U | D) 
-            PARAMS=( "$@" )
-            for (( i=0 ; i<${#PARAMS[*]}; i+=2 ))
-            do
-                if [[ "${PARAMS[$i]}" == "-Umbral" ]]; then
-                    umbral=${PARAMS[$i+1]}
-                elif [[ "${PARAMS[$i]}" == "-Directorio" ]]; then
-                    if [[ ! -d "${PARAMS[$i+1]}" || ! -r "${PARAMS[$i+1]}" ]]; then
-                        echo "El directorio de destino no puede ser escrito/leido..."
-                        exit
-                    fi
-                    directorioOrigen=${PARAMS[$i+1]}
-                elif [[ "${PARAMS[$i]}" == "-DirectorioSalida" ]]; then
-                    if [[ ! -d "${PARAMS[$i+1]}" || ! -r "${PARAMS[$i+1]}" || ! -w "${PARAMS[$i+1]}" ]]; then
-                        echo "El directorio de origen no puede ser leido..."
-                        exit
-                    fi
-                    directorioDestino=${PARAMS[$i+1]}
-                else
-                    echo "Sintaxis incorrecta"
-                fi
-            done
+while getopts "h' help' ?' DirectorioSalida: Directorio: Umbral:" o; do
+    case "${o}" in
+
+        Umbral) 
+            umbral=$OPTARG
+            echo "umbral va bien"
+        ;;
+
+        DirectorioSalida)
+            if [[ ! -d $OPTARG || ! -r $OPTARG || ! -w $OPTARG ]]; then
+                    echo "El directorio de destino no puede ser escrito/leido..."
+                    exit
+            fi
+            echo "destino va bien"
+            directorioDestino=$OPTARG
+        ;;
+        
+        Directorio)
+            if [[ ! -d $OPTARG || ! -r $OPTARG ]]; then
+                    echo "El directorio de origen no puede ser leido..."
+                    exit
+            fi
+            echo "origen va bien"
+            directorioOrigen=$OPTARG
         ;;
 
         *)
             if [[ $1 == '-h' || $1 == '-help' || $1 == '-?' ]]; then
                     echo
                     echo "El archivo se ejecuta ingresando: -Directorio 'archivoOrigen', -DirectorioSalida 'archivoDestino', -Umbral 'umbralKB'"
-                    echo "Ejemplo: bash $0 -Directorio Origen -DirectorioSalida Destino -Umbral 0"
+                    echo "Ejemplo: bash $0 -Directorio Origen -DirectorioSalida Destino - Umbral 0"
                     echo
                     exit
             else
@@ -60,6 +59,7 @@ while getopts "h' help' ?' D: U:" o; do
         ;;
     esac
 done
+
 
 function escriboRepeticiones(){ 
     umbral=$3
@@ -110,7 +110,7 @@ function escriboRepeticiones(){
                 do 
                     if [[ $x == '|' ]]
                         then
-                            printf "\n" >> "$2/Resultado_"$diaEjecucion""$horaEjecucion".out"
+                            printf "\n" >> "$2/Resultado_["$diaEjecucion""$horaEjecucion"].out"
                         else
                             path=${x/'./'/"$(pwd ${archivos[i]})/"}
                             printf "%-30s %-30s\n" "${x//*'/'}" "${path%/*}" >> "$2/Resultado_"$diaEjecucion""$horaEjecucion".out"
