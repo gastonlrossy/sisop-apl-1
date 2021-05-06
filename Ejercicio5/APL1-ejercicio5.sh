@@ -1,41 +1,172 @@
 #!/bin/bash
 
 
-#####                   APL N1                  #####
-#####		        Ejercicio 2 - Entrega           #####
-#####				      APL1-ejercicio2.sh			      #####
+#####                  APL N1                   #####
+#####                Ejercicio 5                #####
+#####             APL1-ejercicio5.sh            #####
 
-#####			GRUPO: 			                          #####
-#####       Tebes, Leandro - 40.227.531	        #####
+#####      GRUPO:                               #####
+#####       Tebes, Leandro - 40.227.531         #####
 #####       Rossy, Gaston L. - 40.137.778       #####
-#####	      Zella, Ezequiel - 41.915.248        #####
+#####       Zella, Ezequiel - 41.915.248        #####
 #####       Cencic, Maximiliano - 41.292.382    #####
 #####       Bonvehi, Sebastian - 40.538.404     #####
 
 
+help(){
+    echo "Hola!"
+    echo "Es necesario ejecutar este script teniendo las bibliotecas JO y JQ en las versiones 1.4 y 1.6 respectivamente."
+    echo "Al ejecutar el script, el mismo evaluará si se tienen dichas dependencias y de tenerlas, evaluará las versiones de las mismas."
+    printf "De no tenerlas o de tener una version anterior, el programa intentará instalarlas preguntandole al usuario previamente.\n\n"
+    echo "Luego, la ejecucion del script es la siguiente:"
+    printf "\t$0 --notas <directorio con los archivos .CSV> --salida <directorio + nombre del archivo json a generar>\n\n"
 
-
-
-#$1 # -> directorio con los .csv
-#$2 # -> ruta del archivo a json a generar
-
-#validar parámetros (existencia de rutas y permisos, cantidad de parámetros).   DONE
-clear
-if ! [ -d "$1" ]; then
-    echo "${1} no es un directorio valido."
     exit
-elif ! [ -r "$1" ]; then
-    echo "${1} no posee posee permisos de lectura."
+}
+
+helpError() {
+    echo "Hola!"
+    printf "La sintaxis para la ejecución del script no fue correcta.\n"
+    if [ "$1" != "" ]; then
+        printf "\nEl error fue: "$1"\n"
+    fi
+    printf "\nPodes ver la ayuda de la siguiente manera:"
+    printf "\n\t$0 -h"
+    printf "\n\t$0 -help"
+    printf "\n\t$0 -?\n\n"
+
     exit
+}
+
+validacionCantParams(){
+    if test $1 -ne 4; then
+        helpError "Cantidad de parametros incorrecta."
+    fi
+}
+
+validacionParams(){
+    if [[ "$1" != "--notas" || "$3" != "--salida" ]]; then
+        helpError "Cantidad de parametros incorrecta."
+    fi
+
+    if ! [ -d "$2" ]; then
+        helpError "${2} no es un directorio valido."
+    fi
+
+    if ! [ -r "$2" ]; then
+        helpError "${2} no posee permisos de lectura."
+    fi
+
+    if ! [ -d `dirname $4` ]; then
+        helpError "${4} no es un directorio valido."
+    fi
+}
+
+obtenerNombreJson(){
+    ruta=$1
+    pathSinExtension="${ruta%.*}"
+    file="${1##*/}"
+    extension="${file##*.}"
+
+    if [ -z "$extension" ]; then
+        helpError "No se ingreso el nombre del archivo a generar."
+    fi
+
+    ruta=$pathSinExtension".json"
+    
+}
+
+while getopts "?'help'h'-:" o; do
+    case $o in
+        -)
+            validacionCantParams $#
+
+            validacionParams "$1" "$2" "$3" "$4"
+
+            obtenerNombreJson "$4"
+
+        ;;
+        *)
+            if [[ $1 == '-h' || $1 == '-help' || $1 == '-?' ]]; then
+                help
+            else
+                helpError "Parametro incorrecto."
+            fi
+        ;;
+    esac
+done
+
+JQ_VERSION=`jq --version &> /dev/null`
+if test $? -eq 0; then
+    JQ_VERSION=`jq --version`
+    if [[ $JQ_VERSION != *"1.6"* ]]; then
+        HAY_Q_INSTALAR_JQ=true
+    fi
+else
+    HAY_Q_INSTALAR_JQ=true
 fi
 
-echo "paso"
-# crear array asociativo de actas
-declare -A ACTAS_POR_DNI
+if [ "$HAY_Q_INSTALAR_JQ" = true ]; then
+    printf "\nEste script utiliza las librerias Jo y Jq.\nQuieres instalar Jq ahora? (Y/N) "
+    read OPCION
+    OPCION=$(echo ${OPCION} | tr [a-z] [A-Z])
+    while ([[ "$OPCION" != "Y" ]] && [[ "$OPCION" != "N" ]]); do
+        echo "Opcion invalida, vuelva a intentar.."
+        printf "\nEste script utiliza las librerias Jo y Jq.\nQuieres instalar Jq ahora? (Y/N) "
+        read OPCION
+        OPCION=$(echo ${OPCION} | tr [a-z] [A-Z])
+    done
+    if [[ "$OPCION" == "N" ]]; then
+        echo "Gracias, vuelva prontos."
+        exit
+    fi
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        # Mac OSX
+        printf "\n\nInstalando JQ para MacOs...\n"
+        brew install jq
+    elif [[ "$OSTYPE" == "linux-gnu" ]]; then
+        printf "\n\nInstalando JQ para Linux...\n"
+        sudo apt-get remove jq
+        sudo snap install jq --edge #para que sea la version 1.6, para la 1.5 no hace falta el --edge
+    fi
+fi
 
-# Llamadar a awk pasandole como parametro el directorio con los csv ($1)
-# Hacer un foreach donde se recorran uno por uno todos los archivos con extension .csv
-for i in $(ls $1 | grep '\.csv$'); do
+JO_VERSION=`jo -version &> /dev/null`
+if test $? -eq "0"; then
+    JO_VERSION=`jo -version`
+    if [[ $JO_VERSION != *"1.4"* ]]; then
+        HAY_Q_INSTALAR_JO=true
+    fi
+else
+    HAY_Q_INSTALAR_JO=true
+fi
+
+if [ "$HAY_Q_INSTALAR_JO" = true ]; then
+    printf "\nEste script utiliza las librerias Jo y Jq.\nQuieres instalar Jo ahora? (Y/N) "
+    read OPCION
+    OPCION=$(echo ${OPCION} | tr [a-z] [A-Z])
+    while ([[ "$OPCION" != "Y" ]] && [[ "$OPCION" != "N" ]]); do
+        echo "Opcion invalida, vuelva a intentar.."
+        printf "\nEste script utiliza las librerias Jo y Jq.\nQuieres instalar Jo ahora? (Y/N) "
+        read OPCION
+        OPCION=$(echo ${OPCION} | tr [a-z] [A-Z])
+    done
+    if [[ "$OPCION" == "N" ]]; then
+        echo "Gracias, vuelva prontos."
+        exit
+    fi
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        # Mac OSX
+        printf "\n\nInstalando JO para MacOs...\n"
+        brew install jo
+    elif [[ "$OSTYPE" == "linux-gnu" ]]; then
+        printf "\n\nInstalando JO para Linux...\n"
+        sudo apt-get remove jo
+        sudo snap install jo
+    fi
+fi
+
+for i in $(ls $2 | grep '\.csv$'); do
 MATERIA="${i%_*}"
 
 resumen=$(awk '
@@ -55,139 +186,49 @@ resumen=$(awk '
       }
     }
     print $1 " " total
-  }' "$1/$i")
+  }' "$2/$i")
 
-  echo $resumen
 
   resumen=` echo $resumen | sed 's/\\n/\ /g'`
-  echo "aaaaaa::: "$resumen
 
   IFS=' '
 
   read -ra ARRAY <<<"$resumen"
-  # echo "ASDASD: " ${!ARRAY[*]}
-  echo "ASDASD: " ${#ARRAY[*]}
-
 
   json_vacio=$(jo -a < /dev/null)
 
-  echo $json_vacio > $HOME"/vacio.json"
+  echo $json_vacio > "$ruta"
 
-  mmm=$( jo actas=:$HOME"/vacio.json" )
+  actas_vacio=$( jo actas=:"$ruta" )
 
-  echo $mmm > $HOME"/vacio.json"
+  echo $actas_vacio > "$ruta"
   
-  echo "uwu2 :: " $mmm
-
 for (( c=0; c<${#ARRAY[*]}; c+=2 )); do
 
     nota=${ARRAY[$c + 1]}
-    # echo "Oh see perro::  " $MATERIA "  " ${ARRAY[$c]} "  " ${ARRAY[$c + 1]}
     obj_nota=$( jo materia="$MATERIA" nota=$nota )
     obj_alumno=$( jo dni=${ARRAY[$c]} notas[]=$obj_nota)
-
-    # obj_nota2=$( jo materia="puto" nota="8rey" )
-    # obj_alumno2=$( jo dni="ahhsocurioso" notas[]=$obj_nota2)
-
-    echo "obj_alumno:: " $obj_alumno
     
-    asd="`grep -o "${ARRAY[$c]}" "$HOME/vacio.json" | wc -l`"
-    # asd="`grep -o "${ARRAY[$c]}" "$HOME/falopita.json" | wc -l`"
+    cantAparicionesDni="`grep -o "${ARRAY[$c]}" "$ruta" | wc -l`"
 
-    echo "es hoy es hoyy:: " $asd
+    if test $cantAparicionesDni -eq 0; then
+      nuevoJson=$( jq --argjson alumno $obj_alumno \
+                      '.actas[.actas | length] += $alumno' "$ruta" )
 
-    if test $asd -eq 0; then
-      echo "No existe el alumno, lo tengo q crear"
-      por_favor=$( jq --argjson alumno $obj_alumno \
-                      '.actas[.actas | length] += $alumno' "$HOME/vacio.json" )
-                      # '.actas[.actas | length] += $alumno' "$HOME/falopita.json" )
     else
-      echo "Existe, tengo q agregar nota"
-      por_favor=$( jq --argjson dni ${ARRAY[$c]} \
+      soloArrAlumnos=$( jq --argjson dni ${ARRAY[$c]} \
                       --argjson nota_alumno "$obj_nota" \
-                      '.actas[] | select(.dni==$dni).notas += [$nota_alumno]' "$HOME/vacio.json" )
-                      # '.actas[] | select(.dni==$dni).notas += [$nota_alumno]' "$HOME/falopita.json" )
+                      '.actas[] | select(.dni==$dni).notas += [$nota_alumno]' "$ruta" )
+
+    soloArrAlumnosFormateado=$( jq -s '.' <<< $soloArrAlumnos)
+
+    echo $soloArrAlumnosFormateado > $HOME"/arr_alumnos.json"
+
+    nuevoJson=$( jo actas=:$HOME"/arr_alumnos.json" )
+
     fi
 
-    echo "por_favor:: " $por_favor
-
-    por_favor_arr=$( jq -s '.' <<< $por_favor)
-
-    echo $por_favor_arr > $HOME"/arr_alumnos.json" # idealmente seria bueno no necesitar guardarlo en un file
-
-    mmm2=$( jo actas=:$HOME"/arr_alumnos.json" ) # para no necesitar guardarlo en un file, tendria q poder consumirlo acá
-
-    echo $mmm2 > $HOME"/vacio.json"
-
-    echo "uwu :: " $mmm2
-
-    # echo $JSON_STRING > $HOME"/falopita.json" # para guardar archivo
+    echo $nuevoJson > "$ruta" # para guardar archivo final
 done
 
-
-# DEBERIA HACER:
-# { "actas": [
-#  {
-#     "dni": "42353607",
-#     "notas": [
-#       { "materia": 6666, "nota": 10 }
-#     ]
-#  },
-#   {
-#     "dni": "45123321",
-#     "notas": [
-#       { "materia": 6666, "nota": 3.75 }
-#     ]
-#  }
-# ] }
-
-# HACE :()
-{
-  "actas": [
-    {
-      "actas": [
-        {
-          "dni": 42353607,
-          "notas": [
-            { "materia": 6666, "nota": 10 }
-          ]
-        }
-      ]
-    },
-    {
-      "dni": 45123321,
-      "notas": [
-        { "materia": 6666, "nota": 3.75 }
-      ]
-    }
-  ]
-}
-
-
-
-# 42353607 10\n45123321 3.75\n40987789 2.5 40987789 2.5
-
-# [0] = 42353607
-# [1] = 10
-# [2] = 45123321 3.75, 40987789 2.5, 40987789 2.5,
-
-# con el resultado de cada .csv ir llenandno el array asociativo con los dnis como key
-
-# como value se tendria un array q en la posicion 0 tendria el codigo de la materia y en la posicion 1, la nota
-
-# en la primera iteracion de un nuevo csv, se deberia analizar la cantidad de columnas, siendo ese resultado -1, la cantidad de ejercicios
-
-# 10 / CantidadEjercicios.
-# • Un ejercicio bien (B) vale el ejercicio entero.
-# • Un ejercicio regular (R) vale medio ejercicio.
-# • Un ejercicio mal (M) no suma puntos a la nota final.
-
-# generar la nota en base a la respuesta de awk por ese file y ese alumno cuyo dni es la key del array asociativo
-
 done
-
-# ["40227531"][0] -> materia
-# ["40227531"][1] -> nota
-
-
-
