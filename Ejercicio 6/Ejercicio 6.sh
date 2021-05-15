@@ -12,6 +12,7 @@
 #####       Bonvehi, Sebastian - 40.538.404     #####
 
 help(){
+    echo "La funcionalidad del script es la de emular una papelera de reciclaje, pudiendo asi elimar archivos y luego en un futuro poder recuperralos"
     echo "El script se forma con estas opciones de ejecución:"
     echo " -l lista los archivos que contiene la papelera de reciclaje, dando la informacion del nombre de archivo y la ubicación donde se encuentra"
     echo " -r [archivo] recupera el archivo pasado por parámetro a la ubicacion donde estaba."
