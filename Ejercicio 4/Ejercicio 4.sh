@@ -16,10 +16,13 @@ KILL_PROCESS=false
 BACKGROUND=false
 
 help(){
+    echo "El script ejecutado se encarga de analizar la extension de los archivos en un directorio y organizarlo en su carpeta correspondiente (cuyo nombre corresponde al de la extension)."
+    echo "El script cuenta con 3 posibles parametros:"
+    echo "-d: Indica el directorio a monitorear por el script"
+    echo "-o: Indica el directorio contenedor de las carpetas organizadoras por extension. De no indicarse se tomara por defecto el directorio Descargas"
+    echo "-s: Frena la ejecucion del script. En caso de enviar este parametro, no deben ser enviados los otros dos."
     echo "El script se usa de la siguiente manera: ""$0"" -d Directorio a monitorear -o Directorio destino "
-    echo "Sino se pasa el parametro -o el directorio destino es el directorio a monitorear "
-    echo "La ejecucion del script de esta manera ""$0"" -s permite la detencion del demonio "
-    echo "No se puede ejecutar el script si se reliza el llamado del parametro '-s' junto con '-d' y '-o'"
+    echo "Ejemplo: ""$0"" -d Descargas -o Extensiones"
     echo "Para llamar a la ayuda: "
     echo "$0 -h"
     echo "$0 -help"

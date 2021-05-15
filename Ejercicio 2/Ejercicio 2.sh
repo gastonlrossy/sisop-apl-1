@@ -43,7 +43,9 @@ print(){
 
 help(){
       echo "Ingresaste a la ayuda del prgrama."
-      echo "El archivo se ejecuta ingresando: -in'." 
+      echo "La funcion del script que desea ejecutar es la de crear un archivo resultado eliminando espacios duplicados, espacios de mas y, en caso de faltar, agregandole un espacio luego de los signos de puntuacion (punto, coma y punto y coma) al archivo enviado por parametro."
+      echo "Ademas, luego de su ejecucion podra consultar un reporte de correcciones que incluira la cantidad de correcciones realizadas y la cantidad de inconsistencias encontradas."
+      echo "El archivo se ejecuta ingresando: -in <Archivo>" 
       echo "Ejemplo: bash nombreScript -in archivoAParsear"
 }
 
