@@ -19,34 +19,39 @@ abs(){
 }
 
 print(){
-    archivo="$2"
-    fecha="$3"
-    pathArchi="$4"
-    contadorIncons=0
-    cont1="$(grep -o '¡' "$archivo" | wc -l)"
-    cont2="$(grep -o '!' "$archivo" | wc -l)"
+    cont1="$(grep -o '¡' "$soloArchivo" | wc -l)"
+    cont2="$(grep -o '!' "$soloArchivo" | wc -l)"
     resultadoResta=$(("$cont1" - "$cont2"))
-    contadorIncons=$(("$contadorIncons" + "${resultadoResta#-}"))
+    contadorSigAdm=$(("$contadorSigAdm" + "${resultadoResta#-}"))
 
-    cont1="$(grep -o '¿' "$archivo" | wc -l)"
-    cont2="$(grep -o '?' "$archivo" | wc -l)"
+    cont1="$(grep -o '¿' "$soloArchivo" | wc -l)"
+    cont2="$(grep -o '?' "$soloArchivo" | wc -l)"
     resultadoResta=$(("$cont1" - "$cont2"))
-    contadorIncons=$(("$contadorIncons" + "${resultadoResta#-}"))
+    contadorSigPreg=$(("$contadorSigPreg" + "${resultadoResta#-}"))
 
-    cont1="$(grep -o '(' "$archivo" | wc -l)"
-    cont2="$(grep -o ')' "$archivo" | wc -l)"
+    cont1="$(grep -o '(' "$soloArchivo" | wc -l)"
+    cont2="$(grep -o ')' "$soloArchivo" | wc -l)"
     resultadoResta=$(("$cont1" - "$cont2"))
-    contadorIncons=$(("$contadorIncons" + "${resultadoResta#-}"))
-    echo  "Cantidad de cambios realizados: $1" > "$pathArchi${archivo%.*}_$fecha.log"
-    echo  "Cantidad de inconsistencias: $contadorIncons" >> "$pathArchi${archivo%.*}_$fecha.log"
+    contadorParentesis=$(("$contadorParentesis" + "${resultadoResta#-}"))
+
+    echo  "Espacios duplicados eliminados: $contadorCambiosED" > "$pathArchi${soloArchivo%.*}_$fecha.log"
+    echo  "Espacios de mas eliminados antes de un punto: $contadorCambiosEspaciosAntesPunto" >> "$pathArchi${soloArchivo%.*}_$fecha.log"
+    echo  "Espacios de mas eliminados antes de una coma: $contadorCambiosEspaciosAntesComa" >> "$pathArchi${soloArchivo%.*}_$fecha.log"
+    echo  "Espacios de mas eliminados antes de un punto y coma: $contadorCambiosEspaciosAntesPuntoComa" >> "$pathArchi${soloArchivo%.*}_$fecha.log"
+    echo  "Espacios agregados despues de un punto: $contadorCambiosAgregarEspacioPunto" >> "$pathArchi${soloArchivo%.*}_$fecha.log"
+    echo  "Espacios agregados despues de una coma: $contadorCambiosAgregarEspacioComa" >> "$pathArchi${soloArchivo%.*}_$fecha.log"
+    echo  "Espacios agregados despues de un punto y coma: $contadorCambiosAgregarEspacioPuntoComa" >> "$pathArchi${soloArchivo%.*}_$fecha.log"
+    echo  "Cantidad de inconsistencias de parentesis dispares: $contadorParentesis" >> "$pathArchi${soloArchivo%.*}_$fecha.log"
+    echo  "Cantidad de inconsistencias de signos de admiracion dispares: $contadorSigAdm" >> "$pathArchi${soloArchivo%.*}_$fecha.log"
+    echo  "Cantidad de inconsistencias de signos de pregunta dispares: $contadorSigPreg" >> "$pathArchi${soloArchivo%.*}_$fecha.log"
 }
 
 help(){
-      echo "Ingresaste a la ayuda del prgrama."
-      echo "La funcion del script que desea ejecutar es la de crear un archivo resultado eliminando espacios duplicados, espacios de mas y, en caso de faltar, agregandole un espacio luego de los signos de puntuacion (punto, coma y punto y coma) al archivo enviado por parametro."
-      echo "Ademas, luego de su ejecucion podra consultar un reporte de correcciones que incluira la cantidad de correcciones realizadas y la cantidad de inconsistencias encontradas."
-      echo "El archivo se ejecuta ingresando: -in <Archivo>" 
-      echo "Ejemplo: bash nombreScript -in archivoAParsear"
+    echo "Ingresaste a la ayuda del prgrama."
+    echo "La funcion del script que desea ejecutar es la de crear un archivo nuevo en base al ingresado eliminando espacios inconsistentes (por ejemplo \"hola     como    estas   ? ==> hola como estas?\") y agregando un espacio, en caso que falte, luego de los signos de puntuacion (punto, coma y punto y coma)."
+    echo "Ademas, luego de su ejecucion podra consultar un reporte de correcciones que incluira la cantidad de correcciones realizadas y la cantidad de inconsistencias encontradas."
+    echo "El archivo se ejecuta ingresando: -in <Archivo>" 
+    echo "Ejemplo: bash nombreScript.sh -in archivoAParsear"
 }
 
 ## Chequeamos cantidad de argumentos ##
@@ -122,34 +127,81 @@ pathArchi=${archivoDeEntrada%/*}/
 if [[ $pathArchi == *"$nombre"* ]]; then
     pathArchi="${pathArchi#*/}"
 fi
-contadorCambios=0 
+contadorCambiosED=0
+contadorCambiosEspaciosAntesComa=0
+contadorCambiosEspaciosAntesPunto=0
+contadorCambiosEspaciosAntesPuntoComa=0
+contadorCambiosAgregarEspacioComa=0
+contadorCambiosAgregarEspacioPunto=0
+contadorCambiosAgregarEspacioPuntoComa=0
+
 
 for lineaArchivo in $( cat "$archivoDeEntrada" )
-    do        
-        cantidadCambiosAnterior=${#lineaArchivo}
-        lineaCambio="$( echo "$lineaArchivo" | tr -s " ")"        
-        cantidadCambiosActual=${#lineaCambio}
-        aux=$(("$cantidadCambiosAnterior"-"$cantidadCambiosActual"))
+    do
+        lineaAntes=${#lineaArchivo}
+        lineaCambio="$( echo "$lineaArchivo" | tr -s " ")"
+        lineaDespues=${#lineaCambio}
+        aux=$(("$lineaAntes"-"$lineaDespues"))
         abs $aux
         aux=$?
-        contadorCambios="$(("$contadorCambios" + "$aux"))"
-        cantidadCambiosAnterior=$cantidadCambiosActual
-        lineaCambio=$( echo "$lineaCambio"| sed 's/[[:space:]]\././g' | sed 's/[[:space:]]\;/;/g' | sed 's/[[:space:]]\,/,/g' ) 
-        cantidadCambiosActual=${#lineaCambio}
-        aux=$(("$cantidadCambiosAnterior"-"$cantidadCambiosActual"))
+        contadorCambiosED="$(("$contadorCambiosED" + "$aux"))"
+
+        
+        lineaAntes=${#lineaCambio}
+        lineaCambio=$( echo "$lineaCambio" | sed 's/[[:space:]]\././g' )
+        lineaDespues=${#lineaCambio}
+        aux=$(("$lineaAntes"-"$lineaDespues"))
         abs $aux
         aux=$?
-        contadorCambios="$(("$contadorCambios" + "$aux"))"
-        cantidadCambiosAnterior=$cantidadCambiosActual
-        lineaCambio=$( echo "$lineaCambio" | sed 's/\./\. /g' | sed 's/\;/\; /g' | sed 's/\,/\, /g' | sed 's/ *$//' | tr -s " ")
-        cantidadCambiosActual=${#lineaCambio}
-        aux=$(("$cantidadCambiosAnterior"-"$cantidadCambiosActual"))
+        contadorCambiosEspaciosAntesPunto="$(("$contadorCambiosEspaciosAntesPunto" + "$aux"))"
+
+
+        lineaAntes=${#lineaCambio}
+        lineaCambio=$( echo "$lineaCambio" | sed 's/[[:space:]]\;/;/g' )
+        lineaDespues=${#lineaCambio}
+        aux=$(("$lineaAntes"-"$lineaDespues"))
         abs $aux
         aux=$?
-        contadorCambios=$(("$contadorCambios" + "$aux"))
+        contadorCambiosEspaciosAntesPuntoComa="$(("$contadorCambiosEspaciosAntesPuntoComa" + "$aux"))"
+
+        lineaAntes=${#lineaCambio}
+        lineaCambio=$( echo "$lineaCambio" | sed 's/[[:space:]]\,/,/g' )
+        lineaDespues=${#lineaCambio}
+        aux=$(("$lineaAntes"-"$lineaDespues"))
+        abs $aux
+        aux=$?
+        contadorCambiosEspaciosAntesComa="$(("$contadorCambiosEspaciosAntesComa" + "$aux"))"
+        
+        lineaAntes=${#lineaCambio}
+        lineaCambio=$( echo "$lineaCambio" | sed 's/\./\. /g' )
+        lineaDespues=${#lineaCambio}
+        aux=$(("$lineaAntes"-"$lineaDespues"))
+        abs $aux
+        aux=$?
+        contadorCambiosAgregarEspacioPunto="$(("$contadorCambiosAgregarEspacioPunto" + "$aux"))"
+
+        lineaAntes=${#lineaCambio}
+        lineaCambio=$( echo "$lineaCambio" | sed 's/\;/\; /g' )
+        lineaDespues=${#lineaCambio}
+        aux=$(("$lineaAntes"-"$lineaDespues"))
+        abs $aux
+        aux=$?
+        contadorCambiosAgregarEspacioPuntoComa="$(("$contadorCambiosAgregarEspacioPuntoComa" + "$aux"))"
+
+        lineaAntes=${#lineaCambio}
+        lineaCambio=$( echo "$lineaCambio" | sed 's/\,/\, /g' )
+        lineaDespues=${#lineaCambio}
+        aux=$(("$lineaAntes"-"$lineaDespues"))
+        abs $aux
+        aux=$?
+        contadorCambiosAgregarEspacioComa="$(("$contadorCambiosAgregarEspacioComa" + "$aux"))"
+        
+        lineaCambio=$( echo "$lineaCambio" | sed 's/ *$//' )
+        lineaCambio=$( echo "$lineaCambio" | tr -s " " )
+
         echo  "$lineaCambio" >> "$pathArchi$nombre""_$fecha.$extension"
     done
 
 unset IFS
 
-print "$contadorCambios" "$soloArchivo" "$fecha" "$pathArchi"
+print
