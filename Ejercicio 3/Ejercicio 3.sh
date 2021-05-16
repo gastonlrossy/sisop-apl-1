@@ -2,7 +2,7 @@
 
 #####                   APL Nº1                 #####
 #####		    Ejercicio 3 - Entrega           #####
-#####			  Ejercicio3_Bash.sh		    #####
+#####			  Ejercicio 3.sh    		    #####
 
 #####				  GRUPO N°2		            #####
 #####       41.915.248 - Zella, Ezequiel        #####
@@ -47,10 +47,14 @@ while getopts "h' help' ?' DirectorioSalida: Directorio: Umbral:" o; do
 
         *)
             if [[ $1 == '-h' || $1 == '-help' || $1 == '-?' ]]; then
-                    echo
+                    echo "Ingresaste a la ayuda del prgrama."
+                    echo "La funcion del script ejecutado es la de buscar archivos duplicados (en contenido) con un tamaño superior al umbral y dejarlos expresados en forma de listado e un documento de texto plano resultante, al que luego el usuario podra entrar para consultar los nombres y rutas de dichos archivos duplicados."
+                    echo "Este script cuenta con tres parametros:"
+                    echo "-Directorio : directorio al cual el script va a ingresar a buscar los archivos duplicados."
+                    echo "-DirectorioSalida : directorio donde se alojara el archivo resultante con el listado de archivos duplicados."
+                    echo "-Umbral : Tamaño minimo en KB para evaluar si los arhivos son duplicados o no."
                     echo "El archivo se ejecuta ingresando: -Directorio 'archivoOrigen', -DirectorioSalida 'archivoDestino', -Umbral 'umbralKB'"
-                    echo "Ejemplo: bash $0 -Directorio Origen -DirectorioSalida Destino - Umbral 0"
-                    echo
+                    echo "Ejemplo: bash $0 -Directorio Origen -DirectorioSalida Destino -Umbral 0"
                     exit
             else
                     echo "Parametro incorrecto, ejecute -h, -help o -? para mas info..."
