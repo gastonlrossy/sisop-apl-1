@@ -16,13 +16,14 @@ KILL_PROCESS=false
 BACKGROUND=false
 
 help(){
-    echo "El script ejecutado se encarga de analizar la extension de los archivos en un directorio y organizarlo en su carpeta correspondiente (cuyo nombre corresponde al de la extension)."
+    echo "El script, una vez ejecutado, detectará en la carpeta origen cualquier archivo nuevo y lo moverá a un subdirectorio cuyo nombre será la extensión del archivo en cuestion. Por ejemplo, si aparece un archivo .zip en nuestra carpeta de origen, este sera movido a la carpeta de destino y dentro de ella aparecera una carpeta llamada \"ZIP\" con el archivo en cuestion dentro."
     echo "El script cuenta con 3 posibles parametros:"
     echo "-d: Indica el directorio a monitorear por el script"
     echo "-o: Indica el directorio contenedor de las carpetas organizadoras por extension. De no indicarse se tomara por defecto el directorio Descargas"
     echo "-s: Frena la ejecucion del script. En caso de enviar este parametro, no deben ser enviados los otros dos."
     echo "El script se usa de la siguiente manera: ""$0"" -d Directorio a monitorear -o Directorio destino "
     echo "Ejemplo: ""$0"" -d Descargas -o Extensiones"
+    echo "Para detener el script se ejecuta de la siguiente manera: ""$0"" -s"
     echo "Para llamar a la ayuda: "
     echo "$0 -h"
     echo "$0 -help"
