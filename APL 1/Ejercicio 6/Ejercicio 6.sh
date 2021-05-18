@@ -40,13 +40,12 @@ recoverF(){
     ORIGINAL_PATH="$1"
     ENTIRE_NAME=$(basename "$1")
     cd "$HOME" || exit
-    unzip -p "$HOME/Recycle_Bin.zip" "$ORIGINAL_PATH" > "$ENTIRE_NAME"
+    unzip -p "$HOME/Recycle_Bin.zip" "$ORIGINAL_PATH" > "$ENTIRE_NAME" 
     DIRNAME="$(dirname -- "$ORIGINAL_PATH")"
-    mv "$HOME/$ENTIRE_NAME" "/$DIRNAME"
-    zip -d "$HOME/Recycle_Bin.zip" "$ORIGINAL_PATH"
+    mv "$HOME/$ENTIRE_NAME" "/$DIRNAME" > /dev/null
+    zip -d "$HOME/Recycle_Bin.zip" "$ORIGINAL_PATH" > /dev/null
+    echo "Archivo recuperado exitosamente."
 }
-
-###HAsta acá ok####
 
 recoverFile(){
     FILE_NAME="$1"
@@ -63,15 +62,21 @@ recoverFile(){
             COUNTER=$(("$COUNTER" + 1))
         fi
     done
-    
+
     unset IFS
 
     if test "$COUNTER" -eq "1" ; then
         echo "El archivo no se encuentra en la papelera."
         exit
     fi
-    echo "¿Que archivo quiere recuperar? "
-    read -r OPCION
+    if test "$COUNTER" -gt "2" ; then 
+        echo "¿Que archivo quiere recuperar? "
+        read -r OPCION
+    else
+        INDEX=$(("$OPCION" - 1))
+        recoverF "${MATCHING_FILES[$INDEX]}"
+        exit
+    fi
 
     while [[ $OPCION -gt $(("$COUNTER" - 1)) ]]; do
         echo "Opcion invalida. ¿Que archivo desea recuperar? "
@@ -112,7 +117,8 @@ printFiles(){
 
 empty(){
     echo "Ha elegido la opcion de vaciar papelera. Vaciando papelera... "
-    zip -d "$HOME/Recycle_Bin.zip" \**
+    zip -d "$HOME/Recycle_Bin.zip" \** > /dev/null
+    echo "Papelera vacia."
 }
 
 recover(){
@@ -174,6 +180,11 @@ if test $# -eq 0; then
     help
 fi
 
+if [ ! -f "$1" ]; then
+    echo "El archivo que se intenta eliminar no existe en la ruta brindada."
+    exit
+fi
+
 INPUT_FILE="$1"
 _NAME=$(basename "$INPUT_FILE")
 PATH_BASE=$PWD
@@ -187,14 +198,14 @@ if [[ $INPUT_FILE == *"../"* ]]; then
     done
     INPUT_FILE=$PATH_BASE'/'"$INPUT_FILE"
 elif [[ $INPUT_FILE != *$PATH_BASE* ]]; then
-    INPUT_FILE=$PWD/"$INPUT_FILE"  
+    INPUT_FILE=$PWD/"$INPUT_FILE"
 fi
 
 PATH_BASE=$(dirname "$INPUT_FILE") 
 WITHOUT_SLASH="${INPUT_FILE:1}"
 
-if [ -s "$HOME/Recycle_Bin.zip" ]; then 
-    if unzip -Z1 "$HOME/Recycle_Bin.zip" | grep "$WITHOUT_SLASH" ; then
+if [ -s "$HOME/Recycle_Bin.zip" ]; then
+    if unzip -Z1 "$HOME/Recycle_Bin.zip" | grep "$WITHOUT_SLASH" > /dev/null; then
         DATE=$(date +"%Y%m%d%H%M" ) 
         if [ "$_NAME" != "${_NAME%.*}" ]; then   
         EXTENSION=".${_NAME##*.}"
@@ -205,10 +216,12 @@ if [ -s "$HOME/Recycle_Bin.zip" ]; then
         mv "$INPUT_FILE" "$REPEATED"
 
 
-        zip -m "$HOME/Recycle_Bin.zip" "$REPEATED" 
+        zip -m "$HOME/Recycle_Bin.zip" "$REPEATED" > /dev/null
     else
-        zip -m "$HOME/Recycle_Bin.zip" "$INPUT_FILE"
+        zip -m "$HOME/Recycle_Bin.zip" "$INPUT_FILE" > /dev/null
     fi
 else
-    zip -m "$HOME/Recycle_Bin.zip" "$INPUT_FILE" 
+    zip -m "$HOME/Recycle_Bin.zip" "$INPUT_FILE" > /dev/null
 fi
+
+echo "Archivo eliminado exitosamente."
