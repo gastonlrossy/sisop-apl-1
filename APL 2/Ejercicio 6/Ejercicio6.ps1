@@ -167,7 +167,7 @@ elseif (!($InputFile.contains($PATH_BASE))) {
 }
 
 
-$PATH_BASE = $inputFile.Split("\")[-1].Split(".")[0] 
+$PATH_BASE = $inputFile.Split("/")[-1].Split(".")[0] 
 $PATH_CUT = $inputFile.TrimStart("/")
 
 if (Test-Path "$RecycleBin") {
