@@ -100,7 +100,7 @@ function Recover-File() {
 
     if (!($file -match '/$')) {
 
-      $name = Split-Path $archivo -Leaf
+      $name = Split-Path $file -Leaf
 
       if ( "$name" -eq "$FileName" ) {
         $Counter = $Counter + 1
