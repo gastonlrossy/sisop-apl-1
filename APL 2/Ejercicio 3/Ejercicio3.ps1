@@ -34,21 +34,9 @@ Param(
 
 
 
-if($help){
-    Write-Host "Ingresaste a la ayuda del prgrama."
-    Write-Host "La funcion del script ejecutado es la de buscar archivos duplicados (en contenido) con un tamaño superior al umbral y dejarlos expresados en forma de listado e un documento de texto plano resultante, al que luego el usuario podra entrar para consultar los nombres y rutas de dichos archivos duplicados."
-    Write-Host "Este script cuenta con tres parametros:"
-    Write-Host "-Directorio : directorio al cual el script va a ingresar a buscar los archivos duplicados."
-    Write-Host "-DirectorioSalida : directorio donde se alojara el archivo resultante con el listado de archivos duplicados."
-    Write-Host "-Umbral : Tamaño minimo en KB para evaluar si los arhivos son duplicados o no."
-    Write-Host "El archivo se ejecuta ingresando: -Directorio 'archivoOrigen', -DirectorioSalida 'archivoDestino', -Umbral 'umbralKB'"
-    Write-Host "Ejemplo: bash $0 -Directorio Origen -DirectorioSalida Destino -Umbral 0"
-    exit
-}
-
 If (!$Directorio -or !$DirectorioSalida -or !$Umbral ){
-    Write-Host "Error al ejecutar el script: El mismo debe ser ejecutado ingresando Archivo de 
-    destino, origen y un umbral"
+    Write-Host "Error al ejecutar el script: El mismo debe ser ejecutado con los
+    parametros -Directorio, -DirectorioSalida y -Umbral. Ejecute el comando Get-Help para mas informacion..."
     exit
 }
 
@@ -112,17 +100,18 @@ $dateTime=Get-Date -Format "yyyyMMddHHmm"
 
 for($l=0; $l -lt $repe.Length; $l++){
     if($repe[$l].Length -le 1){
-        Add-Content -Value "" -Path "$Destino/Resultado_$datetime.out"
+        Add-Content -Value "" -Path "$DirectorioSalida/Resultado_$datetime.out"
     }
     else{   
     $nombre=$repe[$l].Substring($repe[$l].lastIndexOf('\')+1)
     $path=$repe[$l].Substring(0,$repe[$l].lastIndexOf('\')+1)
 
-
+    if($path.Length -gt 0){ 
     $op=$path.Substring(0,$path.Length-1)
+    }
 
     $text="{0,-30} {1,20}" -f "$nombre", "$op"
-    Add-Content -Value $text -Path "$Destino/Resultado_$datetime.out"
+    Add-Content -Value $text -Path "$DirectorioSalida/Resultado_$datetime.out"
     }
  
     
