@@ -93,7 +93,8 @@ function get-repe([Object[]]$ArrayArch){
     return $repetidos
 }
 
-$ArrayArchivos=Get-Childitem -File $Origen -Recurse -include *.txt | Select-Object -Property FullName 
+$size="$Umbral"+"kb"
+$ArrayArchivos=Get-Childitem -File $Origen -Recurse -include *.txt | where Length -gt $size | Select-Object -Property FullName 
 
 $repe=get-repe ($ArrayArchivos)
 $dateTime=Get-Date -Format "yyyyMMddHHmm"
