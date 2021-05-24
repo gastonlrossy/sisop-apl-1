@@ -9,6 +9,17 @@
 #####       Cencic, Maximiliano - 41.292.382    #####
 #####       Bonvehi, Sebastian - 40.538.404     #####
 
+<#
+.Synopsis
+Este programa emula el funcionamiento de una papelera de reciclaje
+.Description
+El script se forma con estas opciones de ejecucion:
+    -l lista los archivos que contiene la papelera de reciclaje, dando la informacion del nombre de archivo y la ubicacion donde se encuentra
+    -r [archivo] recupera el archivo pasado por parametro a la ubicacion donde estaba.
+    -e vacia la papelera de reciclaje
+    [archivo] Sin modificadores para que este archivo lo envie a la papelera de reciclaje.
+#>
+
 Param(
   [Parameter(Mandatory = $false)]
   [Switch]$e,
@@ -89,13 +100,13 @@ function Recover-File() {
 
     if (!($file -match '/$')) {
 
-      $name = Split-Path $archivo -Leaf
+      $name = Split-Path $file -Leaf
 
       if ( "$name" -eq "$FileName" ) {
         $Counter = $Counter + 1
         $MatchingFiles += $file
         $nameAddress = Split-Path -Path "$file"
-        Write-Output "$Counter - $NOMBRE      /$nameAddress"              
+        Write-Output "$Counter - $NOMBRE  /$nameAddress"              
       }
     }
 
