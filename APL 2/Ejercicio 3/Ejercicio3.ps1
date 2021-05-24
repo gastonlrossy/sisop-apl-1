@@ -1,3 +1,14 @@
+#####                   APL Nº2                 #####
+#####		    Ejercicio 3 - Entrega           #####
+#####			  Ejercicio 3.ps1    	        #####
+
+#####				  GRUPO N°2		            #####
+#####       41.915.248 - Zella, Ezequiel        #####
+#####       41.292.382 - Cencic, Maximiliano    #####
+#####       40.538.404 - Bonvehi, Sebastian     #####
+#####       40.137.778 - Rossy, Gastón Lucas    #####
+#####       40.227.531 - Tebes, Leandro  	    #####
+
 
 <#
 .SYNOPSIS
