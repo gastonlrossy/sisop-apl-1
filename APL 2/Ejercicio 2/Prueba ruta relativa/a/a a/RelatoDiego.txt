@@ -1,4 +1,6 @@
-...la va a ¡tocar     para Diego    ,!    ahi la; tiene   ;!!   Maradona, lo marcan ;dos   ¡, pisa la
+...la va a ¡tocar     para;Diego;    ,!    ;ahi la; tiene   ;!!   Maradona, lo marcan ;dos   ¡, pisa la
+...la va a ¡tocar     para;Diego;    ;!    ;ahi la; tiene   ;!!   Maradona, lo marcan ;dos   ¡, pisa la
+...la va a ¡tocar     para;Diego;    .!    ;ahi la; tiene   ;!!   Maradona, lo marcan ;dos   ¡, pisa la
 pelota Maradona, arranca por la derecha el genio del futbol mundial,y
 deja el tercero y va a tocar para Burruchaga. . .
 Siempre     Maradona! Genio! Genio!    Genio! ta-ta-ta-ta-ta-ta-ta... y
