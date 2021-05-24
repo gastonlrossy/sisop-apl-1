@@ -32,16 +32,9 @@ Param(
 )
 function Validate-RecycleBin-Content() {
 
-  if (!(Test-Path "$RecycleBin")) {
+  if (!(Test-Path "$RecycleBin") -or !([System.IO.Compression.ZipFile]::OpenRead("$RecycleBin").Entries.Name)) {
     Write-Output "La papelera se encuentra vacia"
     exit
-  }
-
-  $recycleBinCheck = [System.IO.Compression.ZipFile]::OpenRead("$RecycleBin").Entries.Name
-  if (!$recycleBinCheck ) {
-    Write-Output "La papelera se encuentra vacia"
-    exit
-
   }
  
 }
@@ -137,7 +130,8 @@ function Recover-File() {
 }
 function EmptyTrash() {
   Write-Output "Vaciando la Papelera..."
-  zip -d "$RecycleBin" \**
+  Remove-Item "$RecycleBin" -Force
+  # zip -d "$RecycleBin" \**
 }
 
 
