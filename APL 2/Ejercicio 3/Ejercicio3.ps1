@@ -44,7 +44,6 @@ Param(
 )
 
 
-
 If (!$Directorio -or !$DirectorioSalida){
     Write-Host "Error al ejecutar el script: El mismo debe ser ejecutado con los
     parametros -Directorio, -DirectorioSalida y -Umbral. Ejecute el comando Get-Help para mas informacion..."
@@ -76,11 +75,11 @@ function get-repe([Object[]]$ArrayArch){
     $tamanioArray=$ArrayArch.Length
 
     for($i=0; $i -lt $tamanioArray; $i++){
-        
+        if((file -b --mime-type $ArrayArch[$i].FullName) -eq "text/plain"){
         $incluido=0
 
         for($j=$i+1; $j -lt $tamanioArray; $j++){
-            
+            if((file -b --mime-type $ArrayArch[$j].FullName) -eq "text/plain"){
             try{ 
             if(!$ArrayArch[$i].FullName.equals("") -And !$ArrayArch[$j].FullName.equals("") -And ((Get-Differences $ArrayArch[$i].FullName $ArrayArch[$j].FullName) -eq 1)){
                 if($incluido -eq 0){
@@ -97,19 +96,19 @@ function get-repe([Object[]]$ArrayArch){
             exit
         }
         
-        
+        }
     }
         if($incluido -eq 1){
             $repetidos.Add(" ")
             $ArrayArch[$i].FullName=""
         }
-    
+    }
     }
     return $repetidos
 }
 
 $size="$Umbral"+"kb"
-$ArrayArchivos=Get-Childitem -File $Origen -Recurse | where Length -gt $size | Select-Object -Property FullName | Select-Object (file -b --mime-type) -eq "text/plain"
+$ArrayArchivos=Get-Childitem -File $Directorio -Recurse | where Length -gt $size | Select-Object -Property FullName 
 
 $repe=get-repe ($ArrayArchivos)
 $dateTime=Get-Date -Format "yyyyMMddHHmm"
