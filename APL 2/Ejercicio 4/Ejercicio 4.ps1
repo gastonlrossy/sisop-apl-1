@@ -1,4 +1,4 @@
-#####                   APL N2                  #####
+									#####                   APL N2                  #####
 #####		    Ejercicio 4 - Entrega           #####
 #####				Ejercicio 4.ps1             #####
 
@@ -101,7 +101,8 @@ function global:Move-Files(){
         if(! (Test-Path "$pathDestiny/$fileExtension")) {
             New-Item "$pathDestiny/$fileExtension" -itemtype directory -force >> $null
         }
-        Move-item –path "$pathFrom/$file" –destination "$pathDestiny/$fileExtension" -force >> $null
+        
+        Move-item -Path "$pathFrom/$file" -Destination "$pathDestiny/$fileExtension" -force
     }
     else{
         Move-Item -Path "$pathFrom/$file" -Destination "$pathDestiny" -force >> $null
