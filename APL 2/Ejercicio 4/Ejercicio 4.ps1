@@ -32,12 +32,16 @@ Param (
     [Parameter()]
     [string]$Destino = $false,
     [Parameter()]
-    [switch]$Detener
+    [switch]$Detener = $false
 )
 $global:handlers
 $global:DescargasG=$Descargas
 $global:DestinoG=$Destino
+
 function Test-Parameters(){
+    param(
+        $params
+    )
     if($Detener -eq $True -and ($Descargas -ne $False -or $Destino -ne $False)){
         Write-Output "No se puede ingresar el comando [-Detener] junto con los comandos [-Descarga] y [-Destino]"
         exit
@@ -46,7 +50,9 @@ function Test-Parameters(){
         Write-Output "No se puede ingresar el comando [-Destino] sin enviar el comando [-Descarga]"
         exit
     }
-    Test-Kill-Command -path $Detener
+    
+
+    Test-Kill-Command -params $params
     Test-Path-From -path $Descargas
     Test-Path-Destiny -path $Destino
 }
@@ -75,8 +81,11 @@ function Test-Path-Destiny(){
     }
 }
 function Test-Kill-Command(){
-    if($PSBoundParameters.ContainsKey('Detener'))
-    {
+    param(
+        $params
+    )
+    if($params.ContainsKey('Detener'))
+    {   
         Unregister-Watcher
         exit
     }
@@ -129,13 +138,15 @@ function Register-Watcher(){
     $watcher.EnableRaisingEvents = $true
 }
 function Unregister-Watcher(){
-    $watcher.EnableRaisingEvents = $false
-    $handlers | ForEach-Object {
-        Unregister-Event -SourceIdentifier $_.Name
-      }
-      $handlers | Remove-Job
-      $watcher.Dispose()
+    if($watcher){
+        $watcher.EnableRaisingEvents = $false
+        $handlers | ForEach-Object {
+            Unregister-Event -SourceIdentifier $_.Name
+        }
+        $handlers | Remove-Job
+        $watcher.Dispose()
+    }
 }
 
-Test-Parameters
+Test-Parameters -params $PSBoundParameters
 Start-Process
