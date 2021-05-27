@@ -1,6 +1,6 @@
 #####                   APL Nº2                 #####
 #####		        Ejercicio 6 - Entrega           #####
-#####				        Ejercicio 6.sh			        #####
+#####				        Ejercicio 6.ps1			        #####
 
 #####				          GRUPO N°2 		            #####
 #####       Tebes, Leandro - 40.227.531         #####
