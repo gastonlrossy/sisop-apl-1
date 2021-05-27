@@ -9,6 +9,17 @@
 #####       Cencic, Maximiliano - 41.292.382    #####
 #####       Bonvehi, Sebastian - 40.538.404     #####
 
+<#
+.Synopsis
+Este programa emula el funcionamiento de una papelera de reciclaje
+.Description
+El script se forma con estas opciones de ejecucion:
+    -l lista los archivos que contiene la papelera de reciclaje, dando la informacion del nombre de archivo y la ubicacion donde se encuentra
+    -r [archivo] recupera el archivo pasado por parametro a la ubicacion donde estaba.
+    -e vacia la papelera de reciclaje
+    [archivo] Sin modificadores para que este archivo lo envie a la papelera de reciclaje.
+#>
+
 Param(
   [Parameter(Mandatory = $false)]
   [Switch]$e,
@@ -21,16 +32,9 @@ Param(
 )
 function Validate-RecycleBin-Content() {
 
-  if (!(Test-Path "$RecycleBin")) {
+  if (!(Test-Path "$RecycleBin") -or !([System.IO.Compression.ZipFile]::OpenRead("$RecycleBin").Entries.Name)) {
     Write-Output "La papelera se encuentra vacia"
     exit
-  }
-
-  $recycleBinCheck = [System.IO.Compression.ZipFile]::OpenRead("$RecycleBin").Entries.Name
-  if (!$recycleBinCheck ) {
-    Write-Output "La papelera se encuentra vacia"
-    exit
-
   }
  
 }
@@ -89,13 +93,13 @@ function Recover-File() {
 
     if (!($file -match '/$')) {
 
-      $name = Split-Path $archivo -Leaf
+      $name = Split-Path $file -Leaf
 
       if ( "$name" -eq "$FileName" ) {
         $Counter = $Counter + 1
         $MatchingFiles += $file
         $nameAddress = Split-Path -Path "$file"
-        Write-Output "$Counter - $NOMBRE      /$nameAddress"              
+        Write-Output "$Counter - $NOMBRE  /$nameAddress"              
       }
     }
 
@@ -126,7 +130,8 @@ function Recover-File() {
 }
 function EmptyTrash() {
   Write-Output "Vaciando la Papelera..."
-  zip -d "$RecycleBin" \**
+  Remove-Item "$RecycleBin" -Force
+  # zip -d "$RecycleBin" \**
 }
 
 
@@ -167,7 +172,7 @@ elseif (!($InputFile.contains($PATH_BASE))) {
 }
 
 
-$PATH_BASE = $inputFile.Split("\")[-1].Split(".")[0] 
+$PATH_BASE = $inputFile.Split("/")[-1].Split(".")[0] 
 $PATH_CUT = $inputFile.TrimStart("/")
 
 if (Test-Path "$RecycleBin") {
