@@ -1,38 +1,146 @@
 #!/bin/bash
 
 
-#####                   APL N1                  #####
-#####		        Ejercicio 2 - Entrega           #####
-#####				      APL1-ejercicio2.sh			      #####
+#####                  APL N1                   #####
+#####		         Ejercicio 5                #####
+#####			  APL1-ejercicio5.sh	        #####
 
-#####			GRUPO: 			                          #####
+#####	   GRUPO: 			                    #####
 #####       Tebes, Leandro - 40.227.531	        #####
 #####       Rossy, Gaston L. - 40.137.778       #####
-#####	      Zella, Ezequiel - 41.915.248        #####
+#####	    Zella, Ezequiel - 41.915.248        #####
 #####       Cencic, Maximiliano - 41.292.382    #####
 #####       Bonvehi, Sebastian - 40.538.404     #####
 
 
-#$1 # -> directorio con los .csv
-#$2 # -> ruta del archivo a json a generar
-
-#validar parámetros (existencia de rutas y permisos, cantidad de parámetros).   DONE
-clear
-if ! [ -d "$1" ]; then
-    echo "${1} no es un directorio valido."
+help(){
+    echo "Hola!"
+    echo "Es necesario ejecutar este script teniendo la biblioteca JQ y JO en las version 1.6 y 1.4 respectivamente."
+    echo "Al ejecutar el script, el mismo evaluará si se tiene dicha dependencia y de tenerla, evaluará las version de la misma."
+    printf "De no tenerla o de tener una version anterior, el programa intentará instalarla preguntandole al usuario previamente.\n\n"
+    echo "El objetivo del script es procesar las notas guardadas en archivos CSV y generar un archivo JSON con dichas notas a partir de todos los CSV guardados."
+    echo "El script recibirá los siguientes parámetros:"
+    echo " • --notas: Directorio en el que se encuentran los archivos CSV."
+    echo " • --salida: Ruta del archivo JSON a generar incluyendo el nombre del archivo."
+    echo "Luego, la ejecucion del script es la siguiente:"
+    printf "\t$0 --notas <directorio con los archivos .CSV> --salida <directorio + nombre del archivo json a generar>\n\n"
     exit
-elif ! [ -r "$1" ]; then
-    echo "${1} no posee posee permisos de lectura."
+}
+
+helpError() {
+    echo "Hola!"
+    printf "La sintaxis para la ejecución del script no fue correcta.\n"
+    if [ "$1" != "" ]; then
+        printf "\n"
+        echo El error fue: "$1"
+        printf "\n"
+    fi
+    printf "\nPodes ver la ayuda de la siguiente manera:"
+    printf "\n\t$0 -h"
+    printf "\n\t$0 -help"
+    printf "\n\t$0 -?\n\n"
+
     exit
-fi
+}
 
-echo "paso"
-# crear array asociativo de actas
-declare -A ACTAS_POR_DNI
+validacionCantParams(){
+    if test $1 -ne 4; then
+        helpError "Cantidad de parametros incorrecta."
+    fi
+}
 
-# Llamadar a awk pasandole como parametro el directorio con los csv ($1)
-# Hacer un foreach donde se recorran uno por uno todos los archivos con extension .csv
-for i in $(ls $1 | grep '\.csv$'); do
+validacionParams(){
+    if [[ "$1" != "--notas" || "$3" != "--salida" ]]; then
+        helpError "Cantidad de parametros incorrecta."
+    fi
+
+    if ! [ -d "$2" ]; then
+        helpError "$2 no es un directorio valido."
+    fi
+
+    if ! [ -r "$2" ]; then
+        helpError "$2 no posee permisos de lectura."
+    fi
+
+    if ! [ -d `dirname $4` ]; then
+        helpError "$4 no es un directorio valido."
+    fi
+}
+
+obtenerNombreJson(){
+    ruta=$1
+    pathSinExtension="${ruta%.*}"
+    file="${1##*/}"
+    extension="${file##*.}"
+
+    if [ -z "$pathSinExtension" ]; then
+        if [ -z "$extension" ]; then
+            helpError "No se ingreso el nombre del archivo a generar."
+        fi
+
+        pathSinExtension=$extension
+    fi
+
+    ruta=$pathSinExtension".json"
+}
+
+validarBibliotecas() {
+    JQ_VERSION=`jq --version &> /dev/null`
+    if test $? -eq 0; then
+        JQ_VERSION=`jq --version`
+        if [[ $JQ_VERSION != *"1.6"* ]]; then
+            HAY_Q_INSTALAR_JQ=true
+        fi
+    else
+        HAY_Q_INSTALAR_JQ=true
+    fi
+
+    JO_VERSION=`jo -version &> /dev/null`
+    if test $? -eq "0"; then
+        JO_VERSION=`jo -version`
+        if [[ $JO_VERSION != *"1.4"* ]]; then
+            HAY_Q_INSTALAR_JO=true
+        fi
+    else
+        HAY_Q_INSTALAR_JO=true
+    fi
+
+    if [ "$HAY_Q_INSTALAR_JQ" = true ]; then
+        if [ "$HAY_Q_INSTALAR_JO" = true ]; then
+            helpError "No se puede ejecutar sin la biblioteca JQ en la version 1.6 y JO en la version 1.4"
+        fi
+        helpError "No se puede ejecutar sin la biblioteca JQ en la version 1.6"
+    elif [ "$HAY_Q_INSTALAR_JO" = true ]; then
+        helpError "No se puede ejecutar sin la biblioteca JO en la version 1.4"
+    fi
+}
+
+while getopts "?'help'h'-:" o; do
+    case $o in
+        -)
+            validacionCantParams $#
+
+            validacionParams "$1" "$2" "$3" "$4"
+
+            obtenerNombreJson "$4"
+
+            validarBibliotecas
+
+        ;;
+        *)
+            if [[ $1 == '-h' || $1 == '-help' || $1 == '-?' ]]; then
+                help
+            else
+                helpError "Parametro incorrecto."
+            fi
+        ;;
+    esac
+done
+
+arrVacio=$( jq -n '{"actas": []}' )
+echo $arrVacio > "$ruta"
+
+for i in $(ls $2 | grep '\.csv$'); do
 MATERIA="${i%_*}"
 
 resumen=$(awk '
@@ -52,119 +160,37 @@ resumen=$(awk '
       }
     }
     print $1 " " total
-  }' "$1/$i")
-
-  echo $resumen
-
-  resumen=` echo $resumen | sed 's/\\n/\ /g'`
-  echo "aaaaaa::: "$resumen
-
-  IFS=' '
-
-  read -ra ARRAY <<<"$resumen"
-  # echo "ASDASD: " ${!ARRAY[*]}
-  echo "ASDASD: " ${#ARRAY[*]}
+  }' "$2/$i")
 
 
-  json_vacio=$(jo -a < /dev/null)
+resumen=` echo $resumen | sed 's/\\n/\ /g'`
 
-  echo $json_vacio > $HOME"/vacio.json"
+IFS=' '
 
-  mmm=$( jo actas=:$HOME"/vacio.json" )
-
-  echo $mmm > $HOME"/vacio.json"
+read -ra ARRAY <<<"$resumen"
   
-  echo "uwu2 :: " $mmm
-
 for (( c=0; c<${#ARRAY[*]}; c+=2 )); do
 
     nota=${ARRAY[$c + 1]}
-    # echo "Oh see perro::  " $MATERIA "  " ${ARRAY[$c]} "  " ${ARRAY[$c + 1]}
     obj_nota=$( jo materia="$MATERIA" nota=$nota )
     obj_alumno=$( jo dni=${ARRAY[$c]} notas[]=$obj_nota)
-
-    # obj_nota2=$( jo materia="puto" nota="8rey" )
-    # obj_alumno2=$( jo dni="ahhsocurioso" notas[]=$obj_nota2)
-
-    echo "obj_alumno:: " $obj_alumno
     
-    asd="`grep -o "${ARRAY[$c]}" "$HOME/vacio.json" | wc -l`"
-    # asd="`grep -o "${ARRAY[$c]}" "$HOME/falopita.json" | wc -l`"
+    cantAparicionesDni="`grep -o "${ARRAY[$c]}" "$ruta" | wc -l`"
 
-    echo "es hoy es hoyy:: " $asd
-
-    if test $asd -eq 0; then
-      echo "No existe el alumno, lo tengo q crear"
-      por_favor=$( jq --argjson alumno $obj_alumno \
-                      '.actas[.actas | length] += $alumno' "$HOME/vacio.json" )
-                      # '.actas[.actas | length] += $alumno' "$HOME/falopita.json" )
+    if test $cantAparicionesDni -eq 0; then
+      nuevoJson=$( jq --argjson alumno $obj_alumno \
+                      '.actas[.actas | length] += ($alumno)' "$ruta" )
     else
-      echo "Existe, tengo q agregar nota"
-      por_favor=$( jq --argjson dni ${ARRAY[$c]} \
-                      --argjson nota_alumno "$obj_nota" \
-                      '.actas[] | select(.dni==$dni).notas += [$nota_alumno]' "$HOME/vacio.json" )
-                      # '.actas[] | select(.dni==$dni).notas += [$nota_alumno]' "$HOME/falopita.json" )
+        soloArrAlumnos=$( jq --argjson dni ${ARRAY[$c]} \
+                             --argjson nota_alumno "$obj_nota" \
+                                '.actas[] | select(.dni==$dni).notas += [$nota_alumno]' "$ruta" )
+
+        soloArrAlumnosFormateado=$( jq -s '.' <<< $soloArrAlumnos)
+
+        nuevoJson=$( jq -n --argjson v "$soloArrAlumnosFormateado" '{"actas": ($v)}' )
     fi
 
-    echo "por_favor:: " $por_favor
-
-    por_favor_arr=$( jq -s '.' <<< $por_favor)
-
-    echo $por_favor_arr > $HOME"/arr_alumnos.json" # idealmente seria bueno no necesitar fuardarlo en un file
-
-    mmm=$( jo actas=:$HOME"/arr_alumnos.json" ) # para no necesitar guardarlo en un fail, tendria q poder consumirlo acá
-
-    echo $mmm > $HOME"/vacio.json"
-
-    echo "uwu :: " $mmm
-
-    # echo $JSON_STRING > $HOME"/falopita.json" # para guardar archivo
+    echo $nuevoJson | jq '.' > "$ruta" # para guardar archivo final
 done
 
-
-
-# { "actas": [
-#  {
-#     "dni": "40227531",
-#     "notas": [
-#       { "materia": 1115, "nota": 8 },
-#       { "materia": 1116, "nota": 2 }
-#     ]
-#  },
-#   {
-#     "dni": "87654321",
-#     "notas": [
-#       { "materia": 1116, "nota": 9 },
-#       { "materia": 1118, "nota": 7 }
-#     ]
-#  }
-# ] }
-
-
-
-# 42353607 10\n45123321 3.75\n40987789 2.5 40987789 2.5
-
-# [0] = 42353607
-# [1] = 10
-# [2] = 45123321 3.75, 40987789 2.5, 40987789 2.5,
-
-# con el resultado de cada .csv ir llenandno el array asociativo con los dnis como key
-
-# como value se tendria un array q en la posicion 0 tendria el codigo de la materia y en la posicion 1, la nota
-
-# en la primera iteracion de un nuevo csv, se deberia analizar la cantidad de columnas, siendo ese resultado -1, la cantidad de ejercicios
-
-# 10 / CantidadEjercicios.
-# • Un ejercicio bien (B) vale el ejercicio entero.
-# • Un ejercicio regular (R) vale medio ejercicio.
-# • Un ejercicio mal (M) no suma puntos a la nota final.
-
-# generar la nota en base a la respuesta de awk por ese file y ese alumno cuyo dni es la key del array asociativo
-
 done
-
-# ["40227531"][0] -> materia
-# ["40227531"][1] -> nota
-
-
-
