@@ -145,6 +145,9 @@ for i in $(ls $2 | grep '\.csv$'); do
 
     resumen=` echo $resumen | sed 's/\\n/\ /g'`
 
+    printf "\n"
+    echo "resumen:: " $resumen
+
     IFS=' '
 
     read -ra alumnos <<<"$resumen"
@@ -162,10 +165,10 @@ for i in $(ls $2 | grep '\.csv$'); do
                             '{"dni": ($dni), "notas": [($nota)]}' | sed 's/ //g' | sed 's/\n//g')
         
         cantAparicionesDni="`grep -o "${alumnos[$c]}" "$ruta" | wc -l`"
-        printf "\n"
-        echo "nota:: " $obj_nota
-        echo "alumno:: " $obj_alumno
-        echo "apariciones:: " $cantAparicionesDni
+        # printf "\n"
+        # echo "nota:: " $obj_nota
+        # echo "alumno:: " $obj_alumno
+        # echo "apariciones:: " $cantAparicionesDni
 
         if test $cantAparicionesDni -eq 0; then
             nuevoJson=$( jq --argjson alumno $obj_alumno \
