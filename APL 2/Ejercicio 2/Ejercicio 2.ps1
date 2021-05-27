@@ -105,27 +105,25 @@ foreach ($lineaArchivo in $(cat "$archivoDeEntrada"))
         $contadorCambiosEspaciosAntesComa = $contadorCambiosEspaciosAntesComa + $aux
         
         $lineaAntes = $lineaCambio
-        $lineaCambio = $lineaAntes -replace '\.  ', '.'
-        $lineaCambio = $lineaAntes -replace '\.', '. '
+        $lineaCambio = $lineaAntes -replace "\."   , '. '
+        $lineaCambio = $lineaCambio -replace "\.  ",'. '
         $aux = [Math]::Abs("$lineaAntes".Length-"$lineaCambio".Length)
         $contadorCambiosAgregarEspacioPunto = $contadorCambiosAgregarEspacioPunto + $aux
 
         $lineaAntes = $lineaCambio
-        $lineaCambio = $lineaAntes -replace '\;  ', '\;'
-        $lineaCambio = $lineaAntes -replace '\;', '\; '
+        $lineaCambio = $lineaAntes -replace "\;",'; '
+        $lineaCambio = $lineaCambio -replace "\;  ",'; '
         $aux = [Math]::Abs("$lineaAntes".Length-"$lineaCambio".Length)
         $contadorCambiosAgregarEspacioPuntoComa = $contadorCambiosAgregarEspacioPuntoComa + $aux
 
         $lineaAntes = $lineaCambio
-        $lineaCambio = $lineaAntes -replace '\,  ', ','
-        $lineaCambio = $lineaAntes -replace '\,', ', '
+        $lineaCambio = $lineaAntes -replace "\,"   , ', '
+        $lineaCambio = $lineaCambio -replace "\,  ", ', '
         $aux = [Math]::Abs("$lineaAntes".Length-"$lineaCambio".Length)
         $contadorCambiosAgregarEspacioComa = $contadorCambiosAgregarEspacioComa + $aux
 
-        # $lineaCambio = $lineaAntes -replace '\s+',' '
         $lineaCambio = $lineaCambio.trim()
-        Write-Output "  Antes: $lineaArchivo"
-        Write-Output "Despues: $lineaCambio"
+        
         Write-Output  $lineaCambio >> $pathArchi'/'$nombre'_'$fecha$extension
 
         $cont1 = ($lineaCambio.ToCharArray() | Where-Object {$_ -eq '!'} | Measure-Object).Count
@@ -139,21 +137,6 @@ foreach ($lineaArchivo in $(cat "$archivoDeEntrada"))
         $cont1 = ($lineaCambio.ToCharArray() | Where-Object {$_ -eq '('} | Measure-Object).Count
         $cont2 = ($lineaCambio.ToCharArray() | Where-Object {$_ -eq ')'} | Measure-Object).Count
         $contadorParentesis = $contadorParentesis + [Math]::Abs($cont1 - $cont2)
-
-
-    # Write-Output  "Espacios duplicados eliminados: $contadorCambiosED"
-    # Write-Output  "Espacios de mas eliminados antes de un punto: $contadorCambiosEspaciosAntesPunto"
-    # Write-Output  "Espacios de mas eliminados antes de una coma: $contadorCambiosEspaciosAntesComa"
-    # Write-Output  "Espacios de mas eliminados antes de un punto y coma: $contadorCambiosEspaciosAntesPuntoComa"
-    # Write-Output  "Espacios agregados despues de un punto: $contadorCambiosAgregarEspacioPunto"
-    # Write-Output  "Espacios agregados despues de una coma: $contadorCambiosAgregarEspacioComa"
-    # Write-Output  "Espacios agregados despues de un punto y coma: $contadorCambiosAgregarEspacioPuntoComa"
-    # Write-Output  "Cantidad de inconsistencias de parentesis dispares: $contadorParentesis"
-    # Write-Output  "Cantidad de inconsistencias de signos de admiracion dispares: $contadorSigAdm"
-    # Write-Output  "Cantidad de inconsistencias de signos de pregunta dispares: $contadorSigPreg"
-    # Write-Output " "
-    # Write-Output " "
-    
     }
 
 print $contadorCambiosED $contadorCambiosEspaciosAntesComa $contadorCambiosEspaciosAntesPunto $contadorCambiosAgregarEspacioComa $contadorCambiosAgregarEspacioPunto $contadorCambiosAgregarEspacioPuntoComa $contadorSigAdm $contadorSigPreg $contadorParentesis $nombre $fecha $pathArchi

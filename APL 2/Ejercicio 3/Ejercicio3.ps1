@@ -1,3 +1,14 @@
+#####                   APL Nº2                 #####
+#####		    Ejercicio 3 - Entrega           #####
+#####			  Ejercicio 3.ps1    	        #####
+
+#####				  GRUPO N°2		            #####
+#####       41.915.248 - Zella, Ezequiel        #####
+#####       41.292.382 - Cencic, Maximiliano    #####
+#####       40.538.404 - Bonvehi, Sebastian     #####
+#####       40.137.778 - Rossy, Gastón Lucas    #####
+#####       40.227.531 - Tebes, Leandro  	    #####
+
 
 <#
 .SYNOPSIS
@@ -33,8 +44,7 @@ Param(
 )
 
 
-
-If (!$Directorio -or !$DirectorioSalida -or !$Umbral ){
+If (!$Directorio -or !$DirectorioSalida){
     Write-Host "Error al ejecutar el script: El mismo debe ser ejecutado con los
     parametros -Directorio, -DirectorioSalida y -Umbral. Ejecute el comando Get-Help para mas informacion..."
     exit
@@ -63,37 +73,41 @@ function get-repe([Object[]]$ArrayArch){
 
     $repetidos=New-Object Collections.Generic.List[String]
     $tamanioArray=$ArrayArch.Length
-
     for($i=0; $i -lt $tamanioArray; $i++){
-        $incluido=0
+        if((file -b --mime-type $ArrayArch[$i].FullName >> $null) -eq "text/plain"){
+            $incluido=0
 
-        for($j=$i+1; $j -lt $tamanioArray; $j++){
-            try{ 
-            if(!$ArrayArch[$i].FullName.equals("") -And !$ArrayArch[$j].FullName.equals("") -And ((Get-Differences $ArrayArch[$i].FullName $ArrayArch[$j].FullName) -eq 1)){
-                if($incluido -eq 0){
-                    $repetidos.Add($ArrayArch[$i].FullName)
-                    $incluido=1
-                }
+            for($j=$i+1; $j -lt $tamanioArray; $j++){
+                if((file -b  --mime-type $($ArrayArch[$j].FullName >> $null)) -eq "text/plain"){
+                    try{ 
+                        if(!$ArrayArch[$i].FullName.equals("") -And !$ArrayArch[$j].FullName.equals("") -And ((Get-Differences $ArrayArch[$i].FullName $ArrayArch[$j].FullName) -eq 1)){
+                            if($incluido -eq 0){
+                                $repetidos.Add($ArrayArch[$i].FullName)
+                                $incluido=1
+                            }
 
-                $repetidos.Add($ArrayArch[$j].FullName)
-                $ArrayArch[$j].FullName=""
-            }
+                            $repetidos.Add($ArrayArch[$j].FullName)
+                            $ArrayArch[$j].FullName=""
+                        }
+                    }
+                    catch{
+                        Write-Host "No es posible leer los archivos $ArrayArchi[$i]/$ArrayArchi[$j]"
+                        exit
+                    }
+                    
         }
-        catch{
-            Write-Host "No es posible leer los archivos $ArrayArchi[$i]/$ArrayArchi[$j]"
-            exit
-        }
-        
-        }
+    }
         if($incluido -eq 1){
             $repetidos.Add(" ")
             $ArrayArch[$i].FullName=""
         }
     }
+    }
     return $repetidos
 }
 
-$ArrayArchivos=Get-Childitem -File $Origen -Recurse -include *.txt | Select-Object -Property FullName 
+$size="$Umbral"+"kb"
+$ArrayArchivos=Get-Childitem -File $Directorio -Recurse | where Length -gt $size | Select-Object -Property FullName 
 
 $repe=get-repe ($ArrayArchivos)
 $dateTime=Get-Date -Format "yyyyMMddHHmm"
