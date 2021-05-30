@@ -40,12 +40,24 @@ recoverF(){
     ORIGINAL_PATH="$1"
     ENTIRE_NAME=$(basename "$1")
     cd "$HOME" || exit
-    unzip -p "$HOME/Recycle_Bin.zip" "$ORIGINAL_PATH" > "$ENTIRE_NAME" 
+    unzip -p "$HOME/Recycle_Bin.zip" "$ORIGINAL_PATH" > "$ENTIRE_NAME"
     DIRNAME="$(dirname -- "$ORIGINAL_PATH")"
     LAST_PART=${NAME//*'_'}
     NEWNAME=${NAME%"_$LAST_PART"}
-    mv "$HOME/$ENTIRE_NAME" "$NEWNAME"
-    mv "$HOME/$NEWNAME" "/$DIRNAME" > /dev/null
+    mv "$HOME/$ENTIRE_NAME" "$NEWNAME" > /dev/null
+    
+    if [[ ! -e "/$DIRNAME/$NEWNAME" ]]; then
+        mv "$HOME/$NEWNAME" "/$DIRNAME" > /dev/null
+    else
+        num=1
+        while [[ -e "/$DIRNAME/$NEWNAME ($num)" ]]; do
+                (( num++ ))
+        done
+        mv "$HOME/$NEWNAME" "/$DIRNAME/$NEWNAME ($num)" > /dev/null
+        echo "Tu archivo fue recuperado bajo el nombre $NEWNAME ($num) debido a que ya existía un archivo con el mismo nombre en el directorio"
+        echo "/$DIRNAME"
+    fi
+
     zip -d "$HOME/Recycle_Bin.zip" "$ORIGINAL_PATH" > /dev/null
     echo "Archivo recuperado exitosamente."
 }
@@ -227,8 +239,7 @@ else
 EXTENSION=""
 fi
 REPEATED=$(dirname "$INPUT_FILE")'/'${_NAME%.*}$EXTENSION'_'$DATE''
-mv "$INPUT_FILE" "$REPEATED"
-echo "pase por aca"
+mv "$INPUT_FILE" "$REPEATED" > /dev/null
 
 zip -m "$HOME/Recycle_Bin.zip" "$REPEATED" > /dev/null
 
