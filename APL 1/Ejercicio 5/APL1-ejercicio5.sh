@@ -142,11 +142,7 @@ for i in $(ls $2 | grep '\.csv$'); do
         print $1 " " total
     }' "$2/$i")
 
-
     resumen=` echo $resumen | sed 's/\\n/\ /g'`
-
-    printf "\n"
-    echo "resumen:: " $resumen
 
     IFS=' '
 
@@ -157,7 +153,7 @@ for i in $(ls $2 | grep '\.csv$'); do
         nota=${alumnos[$c + 1]}
 
         obj_nota=$( jq -n --argjson materia "$MATERIA" \
-                        --argjson nota "$nota" \
+                          --argjson nota "$nota" \
                             '{"materia": ($materia), "nota": ($nota)}' | sed 's/ //g' | sed 's/\n//g')
 
         obj_alumno=$( jq -n --argjson dni "${alumnos[$c]}" \
@@ -165,10 +161,6 @@ for i in $(ls $2 | grep '\.csv$'); do
                             '{"dni": ($dni), "notas": [($nota)]}' | sed 's/ //g' | sed 's/\n//g')
         
         cantAparicionesDni="`grep -o "${alumnos[$c]}" "$ruta" | wc -l`"
-        # printf "\n"
-        # echo "nota:: " $obj_nota
-        # echo "alumno:: " $obj_alumno
-        # echo "apariciones:: " $cantAparicionesDni
 
         if test $cantAparicionesDni -eq 0; then
             nuevoJson=$( jq --argjson alumno $obj_alumno \
@@ -192,5 +184,5 @@ for i in $(ls $2 | grep '\.csv$'); do
 
         echo $nuevoJson | jq '.' > "$ruta" # para guardar archivo final
     done
-
+    unset IFS
 done

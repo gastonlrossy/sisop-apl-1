@@ -143,7 +143,7 @@ echo $arrVacio > "$ruta"
 for i in $(ls $2 | grep '\.csv$'); do
 MATERIA="${i%_*}"
 
-resumen=$(awk '
+resumen=$(LC_NUMERIC=en_US.UTF-8 awk '
   BEGIN{
     FS=","
   }
