@@ -42,7 +42,10 @@ recoverF(){
     cd "$HOME" || exit
     unzip -p "$HOME/Recycle_Bin.zip" "$ORIGINAL_PATH" > "$ENTIRE_NAME" 
     DIRNAME="$(dirname -- "$ORIGINAL_PATH")"
-    mv "$HOME/$ENTIRE_NAME" "/$DIRNAME" > /dev/null
+    LAST_PART=${NAME//*'_'}
+    NEWNAME=${NAME%"_$LAST_PART"}
+    mv "$HOME/$ENTIRE_NAME" "$NEWNAME"
+    mv "$HOME/$NEWNAME" "/$DIRNAME" > /dev/null
     zip -d "$HOME/Recycle_Bin.zip" "$ORIGINAL_PATH" > /dev/null
     echo "Archivo recuperado exitosamente."
 }
@@ -60,7 +63,15 @@ recoverFile(){
             MATCHING_FILES[$(( "$COUNTER" - 1))]="$d"
             echo $COUNTER ' - '"$NAME"" /$(dirname -- "$d")"
             COUNTER=$(("$COUNTER" + 1))
+        elif [[ "$NAME" = "$FILE_NAME"* ]]; then
+            LAST_PART=${NAME//*'_'}
+            if [[ "${FILE_NAME}_${LAST_PART}" == "$NAME" ]]; then
+                MATCHING_FILES[$(( "$COUNTER" - 1))]="$d"
+                echo $COUNTER ' - '"$FILE_NAME" "borrado el $LAST_PART /$(dirname -- "$d")"
+                COUNTER=$(("$COUNTER" + 1))
+            fi
         fi
+            
     done
 
     unset IFS
@@ -78,7 +89,7 @@ recoverFile(){
         exit
     fi
 
-    while [[ $OPCION -gt $(("$COUNTER" - 1)) ]]; do
+    while ! [[ $OPCION =~ [0-9]{1}  ]]; do
         echo "Opcion invalida. ¿Que archivo desea recuperar? "
         read -r OPCION
     done
@@ -89,7 +100,12 @@ recoverFile(){
     fi
     
     INDEX=$(("$OPCION" - 1))
-    recoverF "${MATCHING_FILES[$INDEX]}"
+    FILE="${MATCHING_FILES[$INDEX]}"
+    if [ -z "$FILE" ]; then
+        echo "Escribio un numero que no estaba dentro de las opciones. Vuelva a intentarlo ejecutando el script nuevamente."
+        exit
+    fi
+    recoverF "$FILE"
 }
 
 printFiles(){
@@ -104,7 +120,9 @@ printFiles(){
         for d in $LIST; do
             NAME=$(basename "$d")
             if [[ ! -z "$NAME" ]]; then
-                printf "%-40s %-70s\n" "$NAME" "/$(dirname -- "$d")"
+                LAST_PART=${NAME//*'_'}
+                PRINT=${NAME%"_$LAST_PART"}
+                printf "%-40s %-70s\n" "$PRINT borrado el $LAST_PART"  "/$(dirname -- "$d")"
             fi
         done
     else
@@ -191,37 +209,27 @@ PATH_BASE=$PWD
 
 if [[ $INPUT_FILE == *"../"* ]]; then
     AWK="$(awk -F"../" '{print NF-1}' <<< "${INPUT_FILE}" )"
-    
     for (( i=0; i<"$AWK" ; i++ ))
     do
         PATH_BASE=$( dirname -- "$PATH_BASE")
     done
+    INPUT_FILE=${INPUT_FILE##*/}
     INPUT_FILE=$PATH_BASE'/'"$INPUT_FILE"
 elif [[ $INPUT_FILE != *$PATH_BASE* ]]; then
     INPUT_FILE=$PWD/"$INPUT_FILE"
 fi
 
-PATH_BASE=$(dirname "$INPUT_FILE") 
-WITHOUT_SLASH="${INPUT_FILE:1}"
-
-if [ -s "$HOME/Recycle_Bin.zip" ]; then
-    if unzip -Z1 "$HOME/Recycle_Bin.zip" | grep "$WITHOUT_SLASH" > /dev/null; then
-        DATE=$(date +"%Y%m%d%H%M" ) 
-        if [ "$_NAME" != "${_NAME%.*}" ]; then   
-        EXTENSION=".${_NAME##*.}"
-        else
-        EXTENSION=""
-        fi
-        REPEATED=$(dirname "$INPUT_FILE")'/'${_NAME%.*}'_'$DATE''$EXTENSION
-        mv "$INPUT_FILE" "$REPEATED"
-
-
-        zip -m "$HOME/Recycle_Bin.zip" "$REPEATED" > /dev/null
-    else
-        zip -m "$HOME/Recycle_Bin.zip" "$INPUT_FILE" > /dev/null
-    fi
+PATH_BASE=$(dirname "$INPUT_FILE")
+DATE=$(date "+%Y-%m-%d %H:%M:%S" )
+if [ "$_NAME" != "${_NAME%.*}" ]; then
+EXTENSION=".${_NAME##*.}"
 else
-    zip -m "$HOME/Recycle_Bin.zip" "$INPUT_FILE" > /dev/null
+EXTENSION=""
 fi
+REPEATED=$(dirname "$INPUT_FILE")'/'${_NAME%.*}$EXTENSION'_'$DATE''
+mv "$INPUT_FILE" "$REPEATED"
+echo "pase por aca"
+
+zip -m "$HOME/Recycle_Bin.zip" "$REPEATED" > /dev/null
 
 echo "Archivo eliminado exitosamente."
