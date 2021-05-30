@@ -170,7 +170,7 @@ for i in $(ls $2 | grep '\.csv$'); do
                       '.actas[] | select(.dni==$dni).notas' "$ruta" )
 
             if [[ $notasDelAlumno == *"$MATERIA"* ]]; then
-                printf "Warning:\n\tEl alumno: ${alumnos[$c]} rindio dos veces la materia: $MATERIA.\n"
+                printf "Warning:\n\tEl alumno: ${alumnos[$c]} rindio mas de una vez la materia: $MATERIA.\n"
             fi
 
             soloArrAlumnos=$( jq --argjson dni ${alumnos[$c]} \
