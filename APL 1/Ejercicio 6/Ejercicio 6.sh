@@ -40,6 +40,9 @@ recoverF(){
     ORIGINAL_PATH="$1"
     ENTIRE_NAME=$(basename "$1")
     cd "$HOME" || exit
+    echo "$ORIGINAL_PATH"
+    echo "$ENTIRE_NAME"
+    exit
     unzip -p "$HOME/Recycle_Bin.zip" "$ORIGINAL_PATH" > "$ENTIRE_NAME"
     DIRNAME="$(dirname -- "$ORIGINAL_PATH")"
     LAST_PART=${NAME//*'_'}
@@ -232,7 +235,7 @@ elif [[ $INPUT_FILE != *$PATH_BASE* ]]; then
 fi
 
 PATH_BASE=$(dirname "$INPUT_FILE")
-DATE=$(date "+%Y-%m-%d %H:%M:%S" )
+DATE=$(date "+%Y-%m-%d %H.%M.%S" )
 if [ "$_NAME" != "${_NAME%.*}" ]; then
 EXTENSION=".${_NAME##*.}"
 else

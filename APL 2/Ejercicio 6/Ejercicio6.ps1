@@ -1,6 +1,6 @@
 #####                   APL Nº2                 #####
 #####		        Ejercicio 6 - Entrega           #####
-#####				        Ejercicio 6.sh			        #####
+#####				        Ejercicio 6.ps1			        #####
 
 #####				          GRUPO N°2 		            #####
 #####       Tebes, Leandro - 40.227.531         #####
@@ -49,12 +49,12 @@ function List-RecicleByn() {
 
     if (!($file -match '/$')) {
       $name = Split-Path $file -Leaf
-      $nameAddress = Split-Path -Path "$file"
-      printf "%-25s %-50s\n" "$name" "/$nameAddress" 
+      $nameAddress = Split-Path -Path "/$file"
+      $nameShowed = $name.Substring(0, $name.LastIndexOf("_"))
+      $date = $name.Substring($name.LastIndexOf("_")+1)
+      printf "%-25s %-50s\n" "$nameShowed borrado el $date $nameAddress"
     }
-
   }
-
 }
 function Extract-File() {
 
@@ -64,17 +64,30 @@ function Extract-File() {
   )
 
   $Address = $Pwd
-    
-  $originalName = Split-Path $file -Leaf
 
-  # cd $HOME -> comento esto porque el compilador me recomendo usar Set-Location
+  $originalName = Split-Path $file -Leaf
   Set-Location $HOME
-  unzip -p "$RecycleBin" "$PathOriginalFile" >"$originalName"
-  $nameAddress = Split-Path -Path $PathOriginalFile
-  $nameAddress = "/$nameAddress"
-  # mv $HOME/$originalName $DIRNAME -> lo mismo que el cd pero con mv
-  Move-Item $HOME/$originalName $DIRNAME
-  zip -d "$RECYCLEBIN" "$PathOriginalFile"
+  unzip -p "$RecycleBin" "$PathOriginalFile" > "$originalName"
+  $nameAddress = Split-Path -Path "/$PathOriginalFile"
+
+  $newName=$originalName.Substring(0, $originalName.LastIndexOf("_"))
+  Rename-Item -Path "$HOME/$originalName" -NewName $newName >> $null
+
+  if (-Not (Test-Path -Path "$nameAddress/$newName" -PathType Leaf)){
+    Move-Item "$HOME/$newName" "$nameAddress/$newName"
+  }
+  else{
+    $num=1
+    while (Test-Path -Path "$nameAddress/$newName ($num)" -PathType Leaf){
+      $num++
+    }
+    Move-Item "$HOME/$newName" "$nameAddress/$newName ($num)" >> $null
+    Write-Output "Tu archivo fue recuperado bajo el nombre $NEWNAME ($num) debido a que ya existía un archivo con el mismo nombre en el directorio"
+    Write-Output "$nameAddress"
+  }
+
+  zip -d "$RECYCLEBIN" "$PathOriginalFile" >> $null
+  Write-Output "Archivo recuperado exitosamente."
   Set-Location $Address
 }
 
@@ -95,11 +108,16 @@ function Recover-File() {
 
       $name = Split-Path $file -Leaf
 
-      if ( "$name" -eq "$FileName" ) {
+      if ( "$name" -like "$FileName*" ) {
         $Counter = $Counter + 1
         $MatchingFiles += $file
-        $nameAddress = Split-Path -Path "$file"
-        Write-Output "$Counter - $NOMBRE  /$nameAddress"              
+        $nameAddress = Split-Path -Path "/$file"
+        $date = $name.Substring($name.LastIndexOf("_")+1)
+        $nameShowed = $name.Substring(0,$name.LastIndexOf("_"))
+
+        if ("$($nameShowed)_$($date)" -eq $name) {
+          Write-Output "$Counter - $nameShowed borrado el $date $nameAddress"
+        }
       }
     }
 
@@ -110,9 +128,18 @@ function Recover-File() {
     exit
   }
 
-  Write-Output "¿Qué archivo desea recuperar? Si no quiere recuperar ninguno, presione 0 "
-  $Option = Read-Host 
-  while ( $Option -lt 0 -or $OPTION -gt $Counter) {
+  if ($Counter -gt "1"){
+    Write-Output "¿Qué archivo desea recuperar? Si no quiere recuperar ninguno, presione 0 "
+    $Option = Read-Host
+  }
+  else{
+    $Index = ($OPTION - 1)
+    $file = $MatchingFiles[$Index]
+    Extract-File $file
+    exit
+  }
+
+  while ( $Option -notmatch '[0-9]{1}') {
     Write-Output "Opcion invalida. La opcion debe ser un numero y se debe encontrar listado en las opciones por pantalla."
     Write-Output "¿Qué archivo desea recuperar? Si no quiere recuperar ninguno, presione 0 "
     $Option = Read-Host 
@@ -124,16 +151,25 @@ function Recover-File() {
   }
   
   $Index = ($OPTION - 1)
-  Extract-File $MatchingFiles[$Index] 
+  $file = $MatchingFiles[$Index]
 
+  if($null -eq $file) {
+    Write-Output "Escribio un numero que no estaba dentro de las opciones. Vuelva a intentarlo ejecutando el script nuevamente."
+    exit
+  }
 
+  Extract-File $file
 }
 function EmptyTrash() {
   Write-Output "Vaciando la Papelera..."
   Remove-Item "$RecycleBin" -Force
-  # zip -d "$RecycleBin" \**
+  Write-Output "Papelera vaciada con exito."
 }
 
+if(!$e -and !$l -and !$InputFile -and !$r){
+  Write-Output "Por favor, ejecute el script con los parametros correctos. Get-Help para mas informacion."
+  exit
+}
 
 if ($l) {
   Validate-RecycleBin-Content
@@ -171,35 +207,20 @@ elseif (!($InputFile.contains($PATH_BASE))) {
   $InputFile = "$PWD/$InputFile"
 }
 
-
-$PATH_BASE = $inputFile.Split("/")[-1].Split(".")[0] 
-$PATH_CUT = $inputFile.TrimStart("/")
-
-if (Test-Path "$RecycleBin") {
-
-  if ( ` unzip -Z1 "$RecycleBin" | grep "$PATH_CUT" ` ) {
-
-    $date = Get-Date -format "yyyyMMddHHmm" 
-
-    $date = "_$date"
-
-    $nameWithoutExt = $InputFile.Split("/")[-1].Split(".")[0] 
-
-    if ("$name" -ne "$nameWithoutExt") {   
-      $extension = $InputFile.Split("/")[-1].Split(".")[-1]
-      $extension = ".$extension"
-    }   
-
-    $nameAddress = Split-Path -Path $InputFile
-    $REPEATEDFILE = "$nameAddress/$nameWithoutExt$date$extension"
-
-    Move-Item "$InputFile" "$REPEATEDFILE"
-    zip -m "$RECYCLEBIN" "$REPEATEDFILE" 
-  }
-  else {
-    zip -m "$RECYCLEBIN" "$InputFile"
-  }
-}    
-else {
-  zip -m "$RECYCLEBIN" "$InputFile" 
+if(-Not (Test-Path -Path "$InputFile" -PathType Leaf)){
+  Write-Output "El archivo que se intenta borrar no existe."
+  exit
 }
+
+$PATH_BASE = $inputFile.Split("/")[-1].Split(".")[0]
+
+$date = Get-Date -format "yyyy-MM-dd HH.mm.ss" 
+
+$date = "_$date"
+
+$nameAddress = Split-Path -Path $InputFile
+$REPEATEDFILE = "$nameAddress/$name$date"
+Rename-Item "$InputFile" "$REPEATEDFILE" >> $null
+zip -m "$RECYCLEBIN" "$REPEATEDFILE"  >> $null
+Write-Output "Archivo eliminado correctamente."
+ 
