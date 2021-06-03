@@ -68,16 +68,21 @@ validacionParams(){
 
 obtenerNombreJson(){
     ruta=$1
+
+    if [[ $ruta == *"./"* ]]; then
+        basepath=${ruta%/*}''/
+        ruta="${ruta##*/}"
+    fi
+
     pathSinExtension="${ruta%.*}"
     file="${1##*/}"
-    extension="${file##*.}"
 
     if [ -z "$pathSinExtension" ]; then
-        if [ -z "$extension" ]; then
-            helpError "No se ingreso el nombre del archivo a generar."
-        fi
+        helpError "No se ingreso el nombre del archivo a generar."
+    fi
 
-        pathSinExtension=$extension
+    if [ ! -z "$basepath" ]; then
+        pathSinExtension=$basepath''$pathSinExtension
     fi
 
     ruta=$pathSinExtension".json"
