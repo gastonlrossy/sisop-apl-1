@@ -14,7 +14,7 @@
 
 help(){
     echo "Hola!"
-    echo "Es necesario ejecutar este script teniendo la biblioteca JQ en la version 1.6."
+    echo "Es necesario ejecutar este script teniendo la biblioteca JQ en la version 1.5 o upper."
     echo "Al ejecutar el script, el mismo evaluará si se tiene dicha dependencia y de tenerla, evaluará las version de la misma."
     printf "De no tenerla o de tener una version anterior, el programa intentará instalarla preguntandole al usuario previamente.\n\n"
     echo "El objetivo del script es procesar las notas guardadas en archivos CSV y generar un archivo JSON con dichas notas a partir de todos los CSV guardados."
@@ -87,13 +87,17 @@ validarBibliotecas() {
     JQ_VERSION=`jq --version &> /dev/null`
     if test $? -eq 0; then
         JQ_VERSION=`jq --version`
-        if [[ $JQ_VERSION != *"1.6"* ]]; then
-            helpError "No se puede ejecutar sin la biblioteca JQ en la version 1.6"
+        if [[ $JQ_VERSION != *"1.6"* && $JQ_VERSION != *"1.5"* ]]; then
+            helpError "No se puede ejecutar sin la biblioteca JQ en la version 1.5 o upper."
         fi
     else
-        helpError "No se puede ejecutar sin la biblioteca JQ en la version 1.6"
+        helpError "No se puede ejecutar sin la biblioteca JQ en la version 1.5 o upper."
     fi
 }
+
+if [[ $# -ne 4 ]]; then
+    helpError "Cantidad de parametros incorrecta."
+fi
 
 while getopts "?'help'h'-:" o; do
     case $o in
