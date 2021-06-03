@@ -40,9 +40,7 @@ recoverF(){
     ORIGINAL_PATH="$1"
     ENTIRE_NAME=$(basename "$1")
     cd "$HOME" || exit
-    echo "$ORIGINAL_PATH"
-    echo "$ENTIRE_NAME"
-    exit
+    
     unzip -p "$HOME/Recycle_Bin.zip" "$ORIGINAL_PATH" > "$ENTIRE_NAME"
     DIRNAME="$(dirname -- "$ORIGINAL_PATH")"
     LAST_PART=${NAME//*'_'}
