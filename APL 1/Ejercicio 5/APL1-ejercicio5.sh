@@ -15,8 +15,8 @@
 help(){
     echo "Hola!"
     echo "Es necesario ejecutar este script teniendo la biblioteca JQ en la version 1.5 o upper."
-    echo "Al ejecutar el script, el mismo evaluará si se tiene dicha dependencia y de tenerla, evaluará las version de la misma."
-    printf "De no tenerla o de tener una version anterior, el programa intentará instalarla preguntandole al usuario previamente.\n\n"
+    echo "Al ejecutar el script, el mismo evaluará si se tiene dicha dependencia y de tenerla, evaluará que la version de la misma sea correcta."
+    printf "\n"
     echo "El objetivo del script es procesar las notas guardadas en archivos CSV y generar un archivo JSON con dichas notas a partir de todos los CSV guardados."
     echo "El script recibirá los siguientes parámetros:"
     echo " • --notas: Directorio en el que se encuentran los archivos CSV."
