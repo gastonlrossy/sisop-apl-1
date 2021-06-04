@@ -122,6 +122,8 @@ while getopts "?'help'h'-:" o; do
     esac
 done
 
+validacionCantParams $#
+
 arrVacio=$( jq -n '{"actas": []}' )
 echo $arrVacio > "$ruta"
 
@@ -175,19 +177,22 @@ for i in $(ls $2 | grep '\.csv$'); do
                       '.actas[] | select(.dni==$dni).notas' "$ruta" )
 
             if [[ $notasDelAlumno == *"$MATERIA"* ]]; then
-                printf "Warning:\n\tEl alumno: ${alumnos[$c]} rindio mas de una vez la materia: $MATERIA.\n"
+                printf "Warning:\n\tEl alumno: ${alumnos[$c]} rindio mas de una vez la materia: $MATERIA. No se lo volvio a agregar.\n"
+                skipUpdateJson=true
+            else
+                soloArrAlumnos=$( jq --argjson dni ${alumnos[$c]} \
+                                    --argjson nota_alumno "$obj_nota" \
+                                        '.actas[] | select(.dni==$dni).notas += [$nota_alumno]' "$ruta" )
+
+                soloArrAlumnosFormateado=$( jq -s '.' <<< $soloArrAlumnos)
+
+                nuevoJson=$( jq -n --argjson v "$soloArrAlumnosFormateado" '{"actas": ($v)}' )
             fi
-
-            soloArrAlumnos=$( jq --argjson dni ${alumnos[$c]} \
-                                 --argjson nota_alumno "$obj_nota" \
-                                    '.actas[] | select(.dni==$dni).notas += [$nota_alumno]' "$ruta" )
-
-            soloArrAlumnosFormateado=$( jq -s '.' <<< $soloArrAlumnos)
-
-            nuevoJson=$( jq -n --argjson v "$soloArrAlumnosFormateado" '{"actas": ($v)}' )
         fi
 
-        echo $nuevoJson | jq '.' > "$ruta" # para guardar archivo final
+        if [ ! "$skipUpdateJson" = true ]; then
+            echo $nuevoJson | jq '.' > "$ruta" # para guardar archivo final
+        fi
     done
     unset IFS
 done
