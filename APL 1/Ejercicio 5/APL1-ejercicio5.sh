@@ -100,10 +100,6 @@ validarBibliotecas() {
     fi
 }
 
-if [[ $# -ne 4 ]]; then
-    helpError "Cantidad de parametros incorrecta."
-fi
-
 while getopts "?'help'h'-:" o; do
     case $o in
         -)
