@@ -9,8 +9,8 @@
 /****       Cencic, Maximiliano - 41.292.382  *****/
 /****       Bonvehi, Sebastian - 40.538.404   *****/
 
-# Si la sintaxis esperada del script es invalida, 
-#  se imprime por stdout la salida esperada.
+// Si la sintaxis esperada del script es invalida, 
+//  se imprime por stdout la salida esperada.
 
 #include <stdio.h>
 int main()
