@@ -14,9 +14,9 @@
 
 help(){
     echo "Hola!"
-    echo "Es necesario ejecutar este script teniendo la biblioteca JQ en la version 1.6."
-    echo "Al ejecutar el script, el mismo evaluará si se tiene dicha dependencia y de tenerla, evaluará las version de la misma."
-    printf "De no tenerla o de tener una version anterior, el programa intentará instalarla preguntandole al usuario previamente.\n\n"
+    echo "Es necesario ejecutar este script teniendo la biblioteca JQ en la version 1.5 o upper."
+    echo "Al ejecutar el script, el mismo evaluará si se tiene dicha dependencia y de tenerla, evaluará que la version de la misma sea correcta."
+    printf "\n"
     echo "El objetivo del script es procesar las notas guardadas en archivos CSV y generar un archivo JSON con dichas notas a partir de todos los CSV guardados."
     echo "El script recibirá los siguientes parámetros:"
     echo " • --notas: Directorio en el que se encuentran los archivos CSV."
@@ -68,16 +68,21 @@ validacionParams(){
 
 obtenerNombreJson(){
     ruta=$1
+
+    if [[ $ruta == *"./"* ]]; then
+        basepath=${ruta%/*}''/
+        ruta="${ruta##*/}"
+    fi
+
     pathSinExtension="${ruta%.*}"
     file="${1##*/}"
-    extension="${file##*.}"
 
     if [ -z "$pathSinExtension" ]; then
-        if [ -z "$extension" ]; then
-            helpError "No se ingreso el nombre del archivo a generar."
-        fi
+        helpError "No se ingreso el nombre del archivo a generar."
+    fi
 
-        pathSinExtension=$extension
+    if [ ! -z "$basepath" ]; then
+        pathSinExtension=$basepath''$pathSinExtension
     fi
 
     ruta=$pathSinExtension".json"
@@ -87,11 +92,11 @@ validarBibliotecas() {
     JQ_VERSION=`jq --version &> /dev/null`
     if test $? -eq 0; then
         JQ_VERSION=`jq --version`
-        if [[ $JQ_VERSION != *"1.6"* ]]; then
-            helpError "No se puede ejecutar sin la biblioteca JQ en la version 1.6"
+        if [[ $JQ_VERSION != *"1.6"* && $JQ_VERSION != *"1.5"* ]]; then
+            helpError "No se puede ejecutar sin la biblioteca JQ en la version 1.5 o upper."
         fi
     else
-        helpError "No se puede ejecutar sin la biblioteca JQ en la version 1.6"
+        helpError "No se puede ejecutar sin la biblioteca JQ en la version 1.5 o upper."
     fi
 }
 
@@ -116,6 +121,8 @@ while getopts "?'help'h'-:" o; do
         ;;
     esac
 done
+
+validacionCantParams $#
 
 arrVacio=$( jq -n '{"actas": []}' )
 echo $arrVacio > "$ruta"
@@ -142,11 +149,7 @@ for i in $(ls $2 | grep '\.csv$'); do
         print $1 " " total
     }' "$2/$i")
 
-
     resumen=` echo $resumen | sed 's/\\n/\ /g'`
-
-    printf "\n"
-    echo "resumen:: " $resumen
 
     IFS=' '
 
@@ -157,7 +160,7 @@ for i in $(ls $2 | grep '\.csv$'); do
         nota=${alumnos[$c + 1]}
 
         obj_nota=$( jq -n --argjson materia "$MATERIA" \
-                        --argjson nota "$nota" \
+                          --argjson nota "$nota" \
                             '{"materia": ($materia), "nota": ($nota)}' | sed 's/ //g' | sed 's/\n//g')
 
         obj_alumno=$( jq -n --argjson dni "${alumnos[$c]}" \
@@ -165,10 +168,6 @@ for i in $(ls $2 | grep '\.csv$'); do
                             '{"dni": ($dni), "notas": [($nota)]}' | sed 's/ //g' | sed 's/\n//g')
         
         cantAparicionesDni="`grep -o "${alumnos[$c]}" "$ruta" | wc -l`"
-        # printf "\n"
-        # echo "nota:: " $obj_nota
-        # echo "alumno:: " $obj_alumno
-        # echo "apariciones:: " $cantAparicionesDni
 
         if test $cantAparicionesDni -eq 0; then
             nuevoJson=$( jq --argjson alumno $obj_alumno \
@@ -178,19 +177,22 @@ for i in $(ls $2 | grep '\.csv$'); do
                       '.actas[] | select(.dni==$dni).notas' "$ruta" )
 
             if [[ $notasDelAlumno == *"$MATERIA"* ]]; then
-                printf "Warning:\n\tEl alumno: ${alumnos[$c]} rindio dos veces la materia: $MATERIA.\n"
+                printf "Warning:\n\tEl alumno: ${alumnos[$c]} rindio mas de una vez la materia: $MATERIA. No se lo volvio a agregar.\n"
+                skipUpdateJson=true
+            else
+                soloArrAlumnos=$( jq --argjson dni ${alumnos[$c]} \
+                                    --argjson nota_alumno "$obj_nota" \
+                                        '.actas[] | select(.dni==$dni).notas += [$nota_alumno]' "$ruta" )
+
+                soloArrAlumnosFormateado=$( jq -s '.' <<< $soloArrAlumnos)
+
+                nuevoJson=$( jq -n --argjson v "$soloArrAlumnosFormateado" '{"actas": ($v)}' )
             fi
-
-            soloArrAlumnos=$( jq --argjson dni ${alumnos[$c]} \
-                                 --argjson nota_alumno "$obj_nota" \
-                                    '.actas[] | select(.dni==$dni).notas += [$nota_alumno]' "$ruta" )
-
-            soloArrAlumnosFormateado=$( jq -s '.' <<< $soloArrAlumnos)
-
-            nuevoJson=$( jq -n --argjson v "$soloArrAlumnosFormateado" '{"actas": ($v)}' )
         fi
 
-        echo $nuevoJson | jq '.' > "$ruta" # para guardar archivo final
+        if [ ! "$skipUpdateJson" = true ]; then
+            echo $nuevoJson | jq '.' > "$ruta" # para guardar archivo final
+        fi
     done
-
+    unset IFS
 done
