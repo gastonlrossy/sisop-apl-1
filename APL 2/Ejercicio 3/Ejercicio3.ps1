@@ -24,30 +24,37 @@ Ejercicio3.ps1 -Directorio Origen -DirectorioSalida Destino -Umbral 1
 #>
 
 Param(
-[ValidateScript({
-    if(-Not ($_ | Test-Path) ){
-        throw "El directorio no existe" 
-    }
-    return $true
-})]
 [Parameter(Mandatory=$False)] [string]$Directorio,
-
-
-[ValidateScript({
-    if(-Not ($_ | Test-Path) ){
-        throw "El directorio no existe" 
-    }
-    return $true
-})]
 [Parameter(Mandatory=$False)][string]$DirectorioSalida,
 [Parameter(Mandatory=$False)][int]$Umbral
 )
 
 
+if(-Not (Test-Path -Path $Directorio -PathType Container)){
+    Write-Host "El directorio de origen no es un directorio valido..."
+        return 
+}
+
+if(-Not (Test-Path -Path $DirectorioSalida -PathType Container)){
+    Write-Host "El directorio de salida no es un directorio valido..."
+    return 
+}
+
+
+if($Umbral -lt 0){
+    Write-Host "El Umbral no puede ser negativo";
+    return ;
+}
+
+If($Directorio -eq $DirectorioSalida){
+    Write-Host "Error: Los directorios de entrada y salida deben ser distintos...";
+    return ;
+}
+
 If (!$Directorio -or !$DirectorioSalida){
     Write-Host "Error al ejecutar el script: El mismo debe ser ejecutado con los
     parametros -Directorio, -DirectorioSalida y -Umbral. Ejecute el comando Get-Help para mas informacion..."
-    exit
+    return ;
 }
 
 
@@ -74,11 +81,11 @@ function get-repe([Object[]]$ArrayArch){
     $repetidos=New-Object Collections.Generic.List[String]
     $tamanioArray=$ArrayArch.Length
     for($i=0; $i -lt $tamanioArray; $i++){
-        if((file -b --mime-type $ArrayArch[$i].FullName >> $null) -eq "text/plain"){
+        if((file -b --mime-type $ArrayArch[$i].FullName > $null) -eq "text/plain"){
             $incluido=0
 
             for($j=$i+1; $j -lt $tamanioArray; $j++){
-                if((file -b  --mime-type $($ArrayArch[$j].FullName >> $null)) -eq "text/plain"){
+                if((file -b  --mime-type $($ArrayArch[$j].FullName > $null)) -eq "text/plain"){
                     try{ 
                         if(!$ArrayArch[$i].FullName.equals("") -And !$ArrayArch[$j].FullName.equals("") -And ((Get-Differences $ArrayArch[$i].FullName $ArrayArch[$j].FullName) -eq 1)){
                             if($incluido -eq 0){
@@ -107,7 +114,7 @@ function get-repe([Object[]]$ArrayArch){
 }
 
 $size="$Umbral"+"kb"
-$ArrayArchivos=Get-Childitem -File $Directorio -Recurse | where Length -gt $size | Select-Object -Property FullName 
+$ArrayArchivos=Get-Childitem -File $Directorio -Recurse | Where-Object Length -gt $size | Select-Object -Property FullName 
 
 $repe=get-repe ($ArrayArchivos)
 $dateTime=Get-Date -Format "yyyyMMddHHmm"
