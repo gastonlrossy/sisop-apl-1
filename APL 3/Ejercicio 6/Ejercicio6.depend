@@ -1,0 +1,5 @@
+# depslib dependency file v1.0
+1623512690 source:c:\users\globons\desktop\cosas seba\cosas unlam\sistemas operativos\sisop-apl-1\apl 3\ejercicio 6\main.cpp
+	<iostream>
+	<winsock2.h>
+
