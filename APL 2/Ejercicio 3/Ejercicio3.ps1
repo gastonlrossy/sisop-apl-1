@@ -81,18 +81,17 @@ function get-repe([Object[]]$ArrayArch){
     $repetidos=New-Object Collections.Generic.List[String]
     $tamanioArray=$ArrayArch.Length
     for($i=0; $i -lt $tamanioArray; $i++){
-        if((file -b --mime-type $ArrayArch[$i].FullName > $null) -eq "text/plain"){
+        if(!$ArrayArch[$i].FullName.equals("") -And (file -b --mime-type $ArrayArch[$i].FullName) -eq "text/plain"){
             $incluido=0
 
             for($j=$i+1; $j -lt $tamanioArray; $j++){
-                if((file -b  --mime-type $($ArrayArch[$j].FullName > $null)) -eq "text/plain"){
+                if(!$ArrayArch[$j].FullName.equals("") -And (file -b --mime-type $($ArrayArch[$j].FullName)) -eq "text/plain"){
                     try{ 
-                        if(!$ArrayArch[$i].FullName.equals("") -And !$ArrayArch[$j].FullName.equals("") -And ((Get-Differences $ArrayArch[$i].FullName $ArrayArch[$j].FullName) -eq 1)){
+                        if((Get-Differences $ArrayArch[$i].FullName $ArrayArch[$j].FullName) -eq 1){
                             if($incluido -eq 0){
                                 $repetidos.Add($ArrayArch[$i].FullName)
                                 $incluido=1
                             }
-
                             $repetidos.Add($ArrayArch[$j].FullName)
                             $ArrayArch[$j].FullName=""
                         }
@@ -101,7 +100,6 @@ function get-repe([Object[]]$ArrayArch){
                         Write-Host "No es posible leer los archivos $ArrayArchi[$i]/$ArrayArchi[$j]"
                         exit
                     }
-                    
         }
     }
         if($incluido -eq 1){
