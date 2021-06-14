@@ -180,9 +180,15 @@ elseif ($e) {
   EmptyTrash
 }
 elseif ($r) {
-  Validate-RecycleBin-Content
-  Recover-File "$InputFile"
-  $Recover = $true
+  if("$InputFile"){
+    Validate-RecycleBin-Content
+    Recover-File "$InputFile"
+    $Recover = $true
+  }else {
+    Write-Output "Por favor, ejecute el script con los parametros correctos. Get-Help para mas informacion."
+    exit
+  }
+  
 }
 
 if (!$InputFile -or $Recover) {
