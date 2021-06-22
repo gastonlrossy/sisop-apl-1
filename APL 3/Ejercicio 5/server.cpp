@@ -12,47 +12,67 @@
 #include <signal.h>
 #include <fstream>
 
+#define TAM 50
+#define FIL 100
+#define COL 300
+
 using namespace std;
+
+char* mi_strcat(char *s1, const char *s2)
+{
+    char *p=s1;
+
+    while(*s1)
+    {
+        s1++;
+    }
+
+    while(*s2)
+    {
+        *s1=*s2;
+        s1++;
+        s2++;
+    }
+
+    *s1='\0';
+
+    return p;
+}
 
 void help(string nombreEjecutable)
 {
-    cout << "Modo de uso: " << nombreEjecutable << endl;
-    cout << "Modo de uso opcional con archivo a leer por parametro: " << nombreEjecutable << " archivoEntrada.txt" << endl;
-    cout << "Ejecuta el servidor del juego Hangman (Ahorcado)." << endl;
-    cout << "Este juego consiste en adivinar una palabra, ingresando letras y desbloquendo las mismas para completar la palabra" << endl;
-    cout << "Ejecute la instancia de cliente y visualice las letras ingresadas desde el servidor" << endl;
+    cout << "Modo de uso: " << nombreEjecutable << " (Aqui se especifica el puerto)" << endl;
+    cout << "Por ejemplo: " << nombreEjecutable << " " << 8080 << endl;
+    cout << "Ejecuta el servidor del Ahorcado." << endl;
+    cout << "Este juego consiste en adivinar una palabra, ingresando letras y desbloquendo las mismas para completar la palabra. Teniendo una cantidad limitada de jugadas" << endl;
+    cout << "Ejecute la instancia de cliente y observe las letras ingresadas desde el servidor" << endl;
 }
 
-string archivoEntrada = "archivo.txt";
+string inputFile = "archivo.txt";
 
-int obtenerPalabraAleatoria(char lineasTxt[100][300])
+int getRandomWord(char linesTxt[FIL][COL])
 {
-    char linea[300];
-    int cantLineas = 0;
+    char line[COL];
+    int linesCount = 0;
 
     FILE *pTxt = fopen("archivo.txt", "rt");
     if (!fopen)
     {
-        printf("No se pudo abrir el archivo txt");
+        printf("Error al abrir archivo");
         exit(-1);
     }
 
-    while (fgets(linea, sizeof(linea), pTxt))
+    while (fgets(line, sizeof(line), pTxt))
     {
-        strcpy(lineasTxt[cantLineas], linea);
-        cantLineas++;
+        strcpy(linesTxt[linesCount], line);
+        linesCount++;
     }
 
     srand(time(NULL));
-    int random = rand() % cantLineas;
+    int random = rand() % linesCount;
 
     fclose(pTxt);
     return random;
-}
-
-int esLetra(int car)
-{
-    return (car >= 'a' && car <= 'z') || (car >= 'A' && car <= 'Z');
 }
 
 int main(int argc, char **argv)
@@ -60,18 +80,33 @@ int main(int argc, char **argv)
 
     if (argc > 1)
     {
-        int cantIntentos = 6;
 
-        int fd, fd2, longitud_cliente, puerto;
-        puerto = atoi(argv[1]);
+        if (argc == 2)
+        {
+            if ((strcmp(argv[1], "--help") == 0) || ((strcmp(argv[1], "-h")) == 0))
+            {
+                help(argv[0]);
+                return EXIT_SUCCESS;
+            }
+        }
+
+        int attemps = 6;
+        char linesTxt[FIL][COL];
+
+        char wordToGuess[TAM];
+        char middleDashVector[TAM];
+        char playedLetters[TAM];
+
+        int fd, fd2, sizeClient, port;
+        port = atoi(argv[1]);
 
         struct sockaddr_in server;
-        struct sockaddr_in cliente;
+        struct sockaddr_in client;
 
         server.sin_family = AF_INET;
-        server.sin_port = htons(puerto);
+        server.sin_port = htons(port);
         server.sin_addr.s_addr = INADDR_ANY;
-        bzero(&(server.sin_zero), 8);
+        bzero(&(server.sin_zero), 8); 
 
         if ((fd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
         {
@@ -81,148 +116,218 @@ int main(int argc, char **argv)
 
         if (bind(fd, (struct sockaddr *)&server, sizeof(struct sockaddr)) == -1)
         {
-            printf("error en bind() \n");
+            printf("error en funcion bind() \n");
             exit(-1);
         }
 
         if (listen(fd, 5) == -1)
         {
-            printf("error en listen() \n");
+            printf("error en funcion listen() \n");
             exit(-1);
         }
 
-        int puedeEntrar = 1;
+        int flag = 1;
 
-        while (puedeEntrar)
+        while (flag)
         {
-            longitud_cliente = sizeof(struct sockaddr_in);
+            sizeClient = sizeof(struct sockaddr_in);
 
-            socklen_t clientLen = longitud_cliente;
+            socklen_t clientLen = sizeClient;
 
-            if ((fd2 = accept(fd, (struct sockaddr *)&cliente, &clientLen)) == -1)
+            if ((fd2 = accept(fd, (struct sockaddr *)&client, &clientLen)) == -1)
             {
-                printf("error en accept() \n");
+                printf("error en funcion accept() \n");
                 exit(-1);
             }
 
-            send(fd2, "Bienvenido al servidor! \n", 26, 0);
+            send(fd2, "Bienvenido al servidor! \n", FIL, 0);
 
-            char lineasTxt[100][300];
+            printf("Inicio del servidor! \n");
 
-            char palabraAdivinar[50];
-            char vectorGuiones[50];
-            char palabraActual;
-            char letrasJugadas[50];
-            strncpy(letrasJugadas, "", sizeof(letrasJugadas));
+            strncpy(playedLetters, "", sizeof(playedLetters));
 
             char *palAux;
-            int random = obtenerPalabraAleatoria(lineasTxt);
+            int random = getRandomWord(linesTxt);
 
-            palAux = lineasTxt[random];
+            palAux = linesTxt[random];
 
-            strcpy(palabraAdivinar, palAux);
+            strcpy(wordToGuess, palAux);
 
-            int tamanio = strlen(palabraAdivinar) - 1;
+            int tam = strlen(wordToGuess) - 1;
+            int confirmation = 1;
+            int confirmationReceived = 0;
+            int returnStatus = 0;
+            int sendConfirmation = 0;
 
-            char *vectorGuionesAux = (char *)malloc(tamanio);
+            char *middleDashVectorAux = (char *)malloc(tam);
 
-            char *aux = vectorGuionesAux;
-            for (int i = 0; i < tamanio; i++)
+            char *aux = middleDashVectorAux;
+            for (int i = 0; i < tam; i++)
             {
                 *aux = '-';
                 aux++;
             }
+
             *aux = '\0';
 
-            strcpy(vectorGuiones, vectorGuionesAux);
+            strcpy(middleDashVector, middleDashVectorAux);
 
-            int numeroAEnviar = cantIntentos;
-            int cantIntentosAEnviar = htonl(numeroAEnviar);
-            write(fd2, &cantIntentosAEnviar, sizeof(cantIntentosAEnviar));
+            send(fd2, middleDashVector, sizeof(middleDashVector), 0);
 
-            send(fd2, vectorGuiones, 50, 0);
-            send(fd2, letrasJugadas, 50, 0);
-            send(fd2, palabraAdivinar, 50, 0);
+            if ((returnStatus = recv(fd2, &confirmationReceived, sizeof(confirmationReceived), 0)) == -1)
+            {
+                printf("Error en funcion read()\n");
+                exit(-1);
+            }
 
-            char caracter;
+            confirmation = ntohl(confirmationReceived);
+
+            printf("La confirmacion recibida fue: %d\n", confirmation);
+
+            send(fd2, playedLetters, sizeof(playedLetters), 0);
+
+            if ((returnStatus = recv(fd2, &confirmationReceived, sizeof(confirmationReceived), 0)) == -1)
+            {
+                printf("Error en funcion read()\n");
+                exit(-1);
+            }
+
+            confirmation = ntohl(confirmationReceived);
+
+            printf("La confirmacion recibida fue: %d\n", confirmation);
+
+            send(fd2, wordToGuess, sizeof(wordToGuess), 0);
+
+            if ((returnStatus = recv(fd2, &confirmationReceived, sizeof(confirmationReceived), 0)) == -1)
+            {
+                printf("Error en funcion read()\n");
+                exit(-1);
+            }
+
+            confirmation = ntohl(confirmationReceived);
+
+            printf("La confirmacion recibida fue: %d\n", confirmation);
+
+            char character;
+            char beforeCharacter;
             int total = 0;
             int numbytes = 0;
-            char bufferCaracteres[100];
-            strncpy(bufferCaracteres, "", sizeof(bufferCaracteres));
 
-            while (cantIntentos > 0)
+            while (attemps > 0)
             {
-                caracter = '\0';
 
-                while (numbytes != 1 || !esLetra(caracter))
+                if ((returnStatus = recv(fd2, &confirmationReceived, sizeof(confirmationReceived), 0)) == -1)
                 {
-                    numbytes = recv(fd2, &caracter, 1, 0);
+                    printf("Error recibiendo entero ( read() )  \n");
+                    exit(-1);
                 }
+
+                confirmation = ntohl(confirmationReceived);
+
+                printf("La confirmacion recibida es: %d\n", confirmation);
+
+                sendConfirmation = htonl(confirmation);
+                printf("Enviando confirmacion (%d): \n", sendConfirmation);
+                send(fd2, &sendConfirmation, sizeof(sendConfirmation), 0);
+
+                if ((numbytes = recv(fd2, &character, sizeof(char), 0)) == -1)
+                {
+                    printf("error en recv() \n");
+                    exit(-1);
+                }
+
+                sendConfirmation = htonl(confirmation);
+                printf("Enviando confirmacion (%d): \n", sendConfirmation);
+
+                send(fd2, &sendConfirmation, sizeof(sendConfirmation), 0);
 
                 printf("Numero de bytes: %d\n", numbytes);
 
-                printf("Caracter recibido: %c\n", caracter);
+                printf("Caracter recibido: %c\n", character);
 
-                if (strchr(palabraAdivinar, caracter) != NULL && strchr(letrasJugadas, caracter) == NULL)
+                beforeCharacter = character;
+
+                if (strchr(wordToGuess, character) != NULL && strchr(playedLetters, character) == NULL)
                 {
 
-                    char *pInicioPalabra = palabraAdivinar;
-                    char *pInicioVectorGuiones = vectorGuiones;
+                    char *pStartWord = wordToGuess;
+                    char *pStartMiddleDashVector = middleDashVector;
 
-                    printf("La palabra %c esta incluida\n", caracter);
+                    printf("La palabra %c esta incluida\n", character);
 
-                    char *pPalabraAdivinar = pInicioPalabra;
-                    char *pVectorGuiones = pInicioVectorGuiones;
+                    char *pWordToGuess = pStartWord;
+                    char *pMiddleDashVector = pStartMiddleDashVector;
 
-                    int length = strlen(palabraAdivinar);
+                    int length = strlen(wordToGuess);
 
-                    printf("El vector de guiones es: (antes) *%s*\n", vectorGuiones);
+                    printf("El vector de guiones es: (antes) *%s*\n", middleDashVector);
 
                     for (int i = 0; i < length; i++)
                     {
-                        if (toupper(caracter) == toupper(*pPalabraAdivinar))
+                        if (toupper(character) == toupper(*pWordToGuess))
                         {
-                            *pVectorGuiones = toupper(caracter);
+                            *pMiddleDashVector = toupper(character);
                         }
 
-                        pVectorGuiones++;
-                        pPalabraAdivinar++;
+                        pMiddleDashVector++;
+                        pWordToGuess++;
                     }
 
-                    printf("El vector de guiones es: *%s*\n", vectorGuiones);
+                    printf("El vector de guiones es: *%s*\n", middleDashVector);
 
-                    pPalabraAdivinar = pInicioPalabra;
-                    pVectorGuiones = pInicioVectorGuiones;
+                    pWordToGuess = pStartWord;
+                    pMiddleDashVector = pStartMiddleDashVector;
                 }
-                else if (strchr(palabraAdivinar, caracter) == NULL)
+                else if (strchr(wordToGuess, character) == NULL)
                 {
-                    printf("La palabra %c NO esta incluida\n", caracter);
+                    printf("La palabra %c NO esta incluida\n", character);
 
-                    printf("El vector de guiones es: *%s*\n", vectorGuiones);
+                    printf("El vector de guiones es: *%s*\n", middleDashVector);
 
-                    cantIntentos--;
+                    attemps--;
                 }
 
-                caracter = toupper(caracter);
+                character = toupper(character);
 
-                strcat(letrasJugadas, &caracter);
+                mi_strcat(playedLetters, &character);
 
-                printf("Letras jugadas: %s\n", letrasJugadas);
+                printf("Letras jugadas: %s\n", playedLetters);
 
-                send(fd2, vectorGuiones, 50, 0);
-                send(fd2, letrasJugadas, 50, 0);
+                send(fd2, middleDashVector, sizeof(middleDashVector), 0);
+
+                if ((returnStatus = recv(fd2, &confirmationReceived, sizeof(confirmationReceived), 0)) == -1)
+                {
+                    printf("Error en funcion recv()\n");
+                    exit(-1);
+                }
+
+                confirmation = ntohl(confirmationReceived);
+
+                printf("La confirmacion recibida es: %d\n", confirmation);
+
+                send(fd2, playedLetters, sizeof(playedLetters), 0);
+
+                if ((returnStatus = recv(fd2, &confirmationReceived, sizeof(confirmationReceived), 0)) == -1)
+                {
+                    printf("Error en funcion recv()\n");
+                    exit(-1);
+                }
+
+                confirmation = ntohl(confirmationReceived);
+
+                printf("La confirmacion recibida es: %d\n", confirmation);
             }
 
             close(fd2);
 
-            puedeEntrar = 0;
+            flag = 0;
         }
 
         close(fd);
     }
     else
     {
-        printf("No se ingreso el puerto por parametro\n");
+        printf("Parametros invalidos. Para más ayuda ejecute: %s -h o --help\n", argv[0]);
     }
 
     return 0;

@@ -5,12 +5,31 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <arpa/inet.h>
 #include <string.h>
 #include <netdb.h>
 
+#define TAM 50
+#define BUFFER 100
+
 using namespace std;
 
-void dibujarHangman(int intentos)
+char enterCharacter(char *lettersPlayed)
+{
+    bool dou;
+    char character;
+    do
+    {
+        printf("Ingrese una letra para adivinar la palabra\n");
+        fflush(stdin);
+        cin >> character;
+        dou = strchr(lettersPlayed, toupper(character));
+    } while (dou == 1);
+
+    return character;
+}
+
+void draw(int intentos)
 {
 
     switch (intentos)
@@ -28,7 +47,6 @@ void dibujarHangman(int intentos)
         cout << "   |           |   " << endl;
         cout << "   |          / \\  " << endl;
         cout << "   |         /   \\ " << endl;
-        cout << "   |               " << endl;
         cout << "-------            " << endl;
         break;
 
@@ -44,7 +62,6 @@ void dibujarHangman(int intentos)
         cout << "   |           |   " << endl;
         cout << "   |          / \\  " << endl;
         cout << "   |         /   \\ " << endl;
-        cout << "   |               " << endl;
         cout << "-------            " << endl;
         break;
 
@@ -60,7 +77,6 @@ void dibujarHangman(int intentos)
         cout << "   |           |   " << endl;
         cout << "   |            \\  " << endl;
         cout << "   |             \\ " << endl;
-        cout << "   |               " << endl;
         cout << "-------            " << endl;
         break;
 
@@ -74,7 +90,6 @@ void dibujarHangman(int intentos)
         cout << "   |           |\\  " << endl;
         cout << "   |           | \\ " << endl;
         cout << "   |           |   " << endl;
-        cout << "   |               " << endl;
         cout << "   |               " << endl;
         cout << "   |               " << endl;
         cout << "-------            " << endl;
@@ -92,7 +107,6 @@ void dibujarHangman(int intentos)
         cout << "   |           |   " << endl;
         cout << "   |               " << endl;
         cout << "   |               " << endl;
-        cout << "   |               " << endl;
         cout << "-------            " << endl;
         break;
 
@@ -103,7 +117,6 @@ void dibujarHangman(int intentos)
         cout << "   |           |   " << endl;
         cout << "   |           |   " << endl;
         cout << "   |           O   " << endl;
-        cout << "   |               " << endl;
         cout << "   |               " << endl;
         cout << "   |               " << endl;
         cout << "   |               " << endl;
@@ -124,13 +137,12 @@ void dibujarHangman(int intentos)
         cout << "   |               " << endl;
         cout << "   |               " << endl;
         cout << "   |               " << endl;
-        cout << "   |               " << endl;
         cout << "-------            " << endl;
         break;
     }
 }
 
-void mostrarVector(char *vector)
+void showVector(char *vector)
 {
     for (int i = 0; i < strlen(vector); i++)
     {
@@ -139,188 +151,245 @@ void mostrarVector(char *vector)
     cout << endl;
 }
 
-void help(string nombreEjecutable)
+void help(string nameExe)
 {
-    cout << "Modo de uso: " << nombreEjecutable << endl;
+    cout << "Modo de uso: " << nameExe << " [Direcci√≥n IP] [Puerto]" << endl;
+    cout << "Por ejemplo: " << nameExe << " 192.168.0.1 8080" << endl;
     cout << "Ejecuta el cliente del juego Hangman (Ahorcado)." << endl;
-    cout << "Este juego consiste en adivinar una palabra, ingresando letras y desbloquendo las mismas para completar la palabra" << endl;
-    cout << "Una vez en el juego elegir una letra a buscar la coincidencias." << endl;
+    cout << "Este juego consiste en adivinar una palabra, ingresando letras y desbloquendo las mismas para completar la palabra. Teniendo una cantidad limitada de jugadas" << endl;
+}
+
+int notGuessedWord(char *middleDashVector)
+{
+    return strchr(middleDashVector, '-') != NULL;
 }
 
 int main(int argc, char *argv[])
 {
-
-    if (argc > 2)
+    if (argc > 1)
     {
+
+        if (argc == 2)
+        {
+            if ((strcmp(argv[1], "--help") == 0) || ((strcmp(argv[1], "-h")) == 0))
+                help(argv[0]);
+            else
+                cout << "Parametros invalidos. Para mas ayuda ejecute: " << argv[0] << " -h o --help" << endl;
+
+            return EXIT_FAILURE;
+        }
+
+        int attemps = 6;
+        char middleDashVector[TAM];
+        char lettersPlayed[TAM];
+        char wordToGuess[TAM];
+        char middleDashVectorReceived[TAM];
+        char character;
+
+        int confirmation = 1;
+        int sendConfirmation = 0;
+        int receivedConfirmation = 0;
+        int returnStatus = 0;
+
         char *ip;
-        int fd, numbytes, puerto;
-        char buf[100], buf2[100];
-        puerto = atoi(argv[2]);
+        int fd, bytesNumber, port;
+        char buf[BUFFER], vectorBuffer[BUFFER], lettersPlayedBuffer[BUFFER], wordToGuessBuffer[BUFFER];
+        port = atoi(argv[2]);
         ip = argv[1];
 
         struct hostent *he;
-
         struct sockaddr_in server;
 
         if ((he = gethostbyname(ip)) == NULL)
         {
-            printf("gethostbyname() error \n");
+            printf("error en funcion gethostbyname()\n");
             exit(-1);
         }
 
         if ((fd = socket(AF_INET, SOCK_STREAM, 0)) == -1)
         {
-            printf("socket() error\n");
+            printf("error en funcion socket()\n");
             exit(-1);
         }
 
         server.sin_family = AF_INET;
-        server.sin_port = htons(puerto);
-        server.sin_addr = *((struct in_addr *)he->h_addr);
+        server.sin_port = htons(port);
+
+        if (inet_aton(ip, &server.sin_addr) == -1)
+        {
+            printf("Error al conectarse al servidor\n");
+            exit(1);
+        }
+
         bzero(&(server.sin_zero), 8);
 
         socklen_t lengthSocket = sizeof(struct sockaddr);
 
-        if (connect(fd, (struct sockaddr *)&server, lengthSocket) == -1)
+        if (connect(fd, (struct sockaddr *)&server, sizeof(server)) == -1)
         {
-            printf("ERROR: DirecciÛn de IP errÛnea, Û servidor no abierto. \n");
+            printf("ERROR: Direcci√≥n de IP err√≥nea, √≥ servidor no abierto. \n");
             exit(-1);
         }
 
-        if ((numbytes = recv(fd, buf, 100, 0)) == -1)
+        if ((bytesNumber = recv(fd, buf, BUFFER, 0)) == -1)
         {
-            printf("error en recv() \n");
+            printf("error en funcion recv() \n");
             exit(-1);
         }
 
-        buf[numbytes] = '\0';
+        buf[bytesNumber] = '\0';
 
         printf("Mensaje del Servidor: %s\n", buf);
 
-        int returnStatus = 0;
-        int cantIntentosRecibido = 0;
-        int cantIntentos = 0;
-
-        if ((returnStatus = read(fd, &cantIntentosRecibido, sizeof(cantIntentosRecibido))) == -1)
+        if ((bytesNumber = recv(fd, vectorBuffer, BUFFER, 0)) == -1)
         {
-            printf("Error recibiendo entero ( read() )  \n");
+            printf("error en funcion recv()\n");
             exit(-1);
         }
 
-        cantIntentos = ntohl(cantIntentosRecibido);
+        vectorBuffer[bytesNumber] = '\0';
 
-        printf("Cant de intentos recibidos: %d\n", cantIntentosRecibido);
-        printf("Cant de intentos: %d\n", cantIntentos);
+        sendConfirmation = htonl(confirmation);
+        printf("Enviando confirmacion (%d): \n", sendConfirmation);
+        send(fd, &sendConfirmation, sizeof(sendConfirmation), 0);
 
-        char vectorGuiones[50];
-        char letrasJugadas[50];
-        char palabraAdivinar[50];
-        char vectorGuionesRecibido[50];
-        char caracter;
+        strcpy(middleDashVector, vectorBuffer);
 
-        int confirmacion = 1;
-
-        if ((numbytes = recv(fd, buf2, 50, 0)) == -1)
+        if ((bytesNumber = recv(fd, lettersPlayedBuffer, BUFFER, 0)) == -1)
         {
-            printf("error en recv() -> vector de guiones \n");
+            printf("error en funcion recv()\n");
             exit(-1);
         }
 
-        buf2[numbytes] = '\0';
+        lettersPlayedBuffer[bytesNumber] = '\0';
 
-        strcpy(vectorGuiones, buf2);
+        strcpy(lettersPlayed, lettersPlayedBuffer);
 
-        if ((numbytes = recv(fd, buf2, 50, 0)) == -1)
+        sendConfirmation = htonl(confirmation);
+
+        printf("Enviando confirmacion (%d): \n", sendConfirmation);
+
+        send(fd, &sendConfirmation, sizeof(sendConfirmation), 0);
+
+        if ((bytesNumber = recv(fd, wordToGuessBuffer, BUFFER, 0)) == -1)
         {
-            printf("error en recv() -> letras jugadas \n");
+            printf("error en funcion recv()\n");
             exit(-1);
         }
 
-        buf2[numbytes] = '\0';
+        wordToGuessBuffer[bytesNumber] = '\0';
 
-        strcpy(letrasJugadas, buf2);
+        sendConfirmation = htonl(confirmation);
 
-        if ((numbytes = recv(fd, buf2, 50, 0)) == -1)
-        {
-            printf("error en recv() -> palabra a adivinar \n");
-            exit(-1);
-        }
+        printf("Enviando confirmacion (%d): \n", sendConfirmation);
 
-        buf2[numbytes] = '\0';
+        send(fd, &sendConfirmation, sizeof(sendConfirmation), 0);
 
-        strcpy(palabraAdivinar, buf2);
+        strcpy(wordToGuess, wordToGuessBuffer);
 
-        printf("Vector de guiones: %s\n", vectorGuiones);
-        printf("Letras jugadas: %s\n", letrasJugadas);
-        printf("Palabra a adivinar: %s\n", palabraAdivinar);
+        printf("Guiones: %s\n", middleDashVector);
+        printf("Letras jugadas: %s\n", lettersPlayed);
+        printf("Palabra a adivinar: %s\n", wordToGuess);
 
-        dibujarHangman(cantIntentos);
+        draw(attemps);
 
         printf("\n\n");
 
-        mostrarVector(vectorGuiones);
+        showVector(middleDashVector);
 
-        while (cantIntentos > 0)
+        bool dou;
+
+        while (attemps > 0 && notGuessedWord(middleDashVector))
         {
-            printf("Ingrese una letra para adivinar la palabra\n");
-            scanf("%c", &caracter);
 
-            fflush(stdin);
+            sendConfirmation = htonl(confirmation);
+            printf("Enviando confirmacion (%d): \n", sendConfirmation);
+            send(fd, &sendConfirmation, sizeof(sendConfirmation), 0);
 
-            send(fd, &caracter, 1, 0);
-
-            if ((numbytes = recv(fd, buf2, 50, 0)) == -1)
+            if ((returnStatus = recv(fd, &receivedConfirmation, sizeof(receivedConfirmation), 0)) == -1)
             {
-                printf("error en recv() \n");
+                printf("Error recibiendo confirmacion del caracter  \n");
                 exit(-1);
             }
 
-            strcpy(vectorGuionesRecibido, buf2);
+            confirmation = ntohl(receivedConfirmation);
 
-            if ((numbytes = recv(fd, buf2, 50, 0)) == -1)
+            printf("La confirmacion recibida fue: %d\n", confirmation);
+
+            character = enterCharacter(lettersPlayed);
+
+            send(fd, &character, sizeof(char), 0);
+
+            if ((returnStatus = recv(fd, &receivedConfirmation, sizeof(receivedConfirmation), 0)) == -1)
             {
-                printf("error en recv() \n");
+                printf("Error recibiendo confirmacion del caracter  \n");
                 exit(-1);
             }
 
-            strcpy(letrasJugadas, buf2);
+            confirmation = ntohl(receivedConfirmation);
 
-            if (strcmp(vectorGuiones, vectorGuionesRecibido) == 0)
+            printf("La confirmacion recibida es: %d\n", confirmation);
+
+            if ((bytesNumber = recv(fd, vectorBuffer, sizeof(vectorBuffer), 0)) == -1)
             {
-                cantIntentos--;
-                dibujarHangman(cantIntentos);
+                printf("error en funcion recv() \n");
+                exit(-1);
+            }
 
-                printf("No has acertado ninguna letra \n Te quedan %d intentos \n\n", cantIntentos);
+            strcpy(middleDashVectorReceived, vectorBuffer);
 
-                mostrarVector(vectorGuiones);
+            sendConfirmation = htonl(confirmation);
+            printf("Enviando confirmacion (%d): \n", sendConfirmation);
+            send(fd, &sendConfirmation, sizeof(sendConfirmation), 0);
+
+            if ((bytesNumber = recv(fd, lettersPlayedBuffer, sizeof(lettersPlayedBuffer), 0)) == -1)
+            {
+                printf("error en funcion recv() \n");
+                exit(-1);
+            }
+
+            strcpy(lettersPlayed, lettersPlayedBuffer);
+
+            sendConfirmation = htonl(confirmation);
+            printf("Enviando confirmacion (%d): \n", sendConfirmation);
+            send(fd, &sendConfirmation, sizeof(sendConfirmation), 0);
+
+            if (strcmp(middleDashVector, middleDashVectorReceived) == 0)
+            {
+                attemps--;
+                draw(attemps);
+
+                printf("No has acertado.\n Te quedan %d intentos \n\n", attemps);
+
+                showVector(middleDashVector);
             }
             else
             {
-                strcpy(vectorGuiones, vectorGuionesRecibido);
+                strcpy(middleDashVector, middleDashVectorReceived);
 
-                printf("Has acertado!\n Te quedan %d intentos \n\n", cantIntentos);
+                printf("Has acertado!\n Te quedan %d intentos \n\n", attemps);
 
-                mostrarVector(vectorGuiones);
+                showVector(middleDashVector);
             }
         }
 
-        if (cantIntentos > 0)
+        if (attemps > 0)
         {
-            printf("Ganaste!!!\n");
+            printf("Ganaste! Te esperamos para jugar de nuevo.\n");
         }
         else
         {
-            dibujarHangman(cantIntentos);
-            printf("Perdiste :(\n");
+            draw(attemps);
+            printf("Perdiste :(\n Te esperamos para jugar de nuevo.");
         }
 
-        printf("La palabra a adivinar era: %s \n", palabraAdivinar);
+        printf("La palabra a adivinar era: %s \n", wordToGuess);
 
         close(fd);
     }
     else
     {
-        printf("No se ingreso el ip y puerto por parametro\n");
+        printf("Parametros invalidos. Para m√°s ayuda ejecute: %s -h o --help\n", argv[0]);
     }
 
     return 0;
