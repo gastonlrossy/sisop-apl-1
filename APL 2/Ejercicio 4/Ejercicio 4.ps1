@@ -1,4 +1,4 @@
-									#####                   APL N2                  #####
+#####                   APL N2                  #####
 #####		    Ejercicio 4 - Entrega           #####
 #####				Ejercicio 4.ps1             #####
 
