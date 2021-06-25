@@ -162,17 +162,17 @@ int main(int argc, char **argv)
 
         while (canEntry)
         {
-            if(cantMatchs >= 1)
-            {
-                printf("\nQuiere cerrar el servidor? (s/n)\n");
-                cin >> characterToAdd;
+            // if(cantMatchs >= 1)
+            // {
+            //     printf("\nQuiere cerrar el servidor? (s/n)\n");
+            //     cin >> characterToAdd;
 
-                if(toupper(characterToAdd) == 'S')
-                {
-                    closeServer(SIGUSR1);
-                }
+            //     if(toupper(characterToAdd) == 'S')
+            //     {
+            //         closeServer(SIGUSR1);
+            //     }
         
-            }
+            // }
 
             cantMatchs++;
 
