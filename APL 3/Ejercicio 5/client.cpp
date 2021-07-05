@@ -1,3 +1,16 @@
+/*
+#####                   APL N3                  #####
+#####		    Ejercicio 5 - Entrega           #####
+#####				client.cpp                  #####
+
+#####			      GRUPO Nº2                 #####
+#####         Tebes, Leandro - 40.227.531       #####
+#####         Rossy, Gaston L. - 40.137.778     #####
+#####	      Zella, Ezequiel - 41.915.248      #####
+#####       Cencic, Maximiliano - 41.292.382    #####
+#####       Bonvehi, Sebastian - 40.538.404     ##### 
+*/
+
 #include <iostream>
 #include <unistd.h>
 #include <stdio.h>
@@ -10,9 +23,17 @@
 #include <netdb.h>
 #include <signal.h>
 
+#define ERROR -1
+#define OK 0
+#define NOT_OK 1
+#define TAM 50
+#define PID_NO 64
+#define BUFFER 100
+#define PID_LINE 1024
+
 using namespace std;
 
-char enterCharacter(char *playedLetters)
+char addCharacter(char *playedLetters)
 {
     bool isRepeated = 0;
     char character;
@@ -32,7 +53,7 @@ char enterCharacter(char *playedLetters)
     return character;
 }
 
-void draw(int attemps)
+void drawHangman(int attemps)
 {
 
     switch (attemps)
@@ -161,12 +182,13 @@ void showVec(char *vector)
     cout << endl;
 }
 
-void help(string nameExe)
+void help(string exe)
 {
-    cout << "Modo de uso: " << nameExe << " [IP] [Puerto]" << endl;
-    cout << "Por ejemplo: " << nameExe << " 192.167.0.1 8080" << endl;
-    cout << "Ejecuta el cliente del ahorcado." << endl;
-    cout << "Este juego consiste en adivinar una palabra, ingresando letras y desbloquendo las mismas para completar la palabra. Teniendo una cantidad limitada de intentos." << endl;
+    cout << "Modo de uso: " << exe << " [Dirección IP] [Puerto]" << endl;
+    cout << "Por ejemplo: " << exe << " 192.167.0.1 8080" << endl;
+    cout << "Ejecuta el cliente del juego Ahorcado." << endl;
+    cout << "Este juego consiste en adivinar una palabra, ingresando letras y desbloquendo las mismas para completar la palabra. Teniendo asi una cantidad limitada de intentos." << endl;
+    cout << "Una vez en el juego elegir una letra a buscar la coincidencias." << endl;
 }
 
 int notGuessedWord(char *middleDashVec)
@@ -178,12 +200,14 @@ int fd;
 
 int getPID(void)
 {
-    char pidline[1024];
+    char pidline[PID_LINE];
     char *pid;
     int i = 0;
-    int pidno[64];
-    FILE *fp = popen("pidof servidor.exe", "r");
-    fgets(pidline, 1024, fp);
+    int pidno[PID_NO];
+
+    FILE *fp = popen("pidof server.exe", "r");
+
+    fgets(pidline, PID_LINE, fp);
 
     pid = strtok(pidline, " ");
 
@@ -193,7 +217,6 @@ int getPID(void)
     }
 
     pclose(fp);
-
     return pidno[i];
 }
 
@@ -201,16 +224,15 @@ void closeClient(int sig)
 {
     if (SIGINT == sig || sig == SIGUSR1)
     {
-        printf("\nAbandonaste la partida. \n");
+        printf("\nAbandonaste la partida.\n");
+
         close(fd);
 
-        int pidObtenido = getPID();
-
-        pid_t pid = (pid_t) pidObtenido;
+        pid_t pid = getpid();
 
         kill(pid, SIGUSR1);
 
-        exit(0);
+        exit(OK);
     }
 }
 
@@ -222,29 +244,29 @@ int main(int argc, char *argv[])
 
         if (argc == 2)
         {
-            if ((strcmp(argv[1], "--help") == 0) || ((strcmp(argv[1], "-h")) == 0))
+            if ((strcmp(argv[1], "--help") == 0) || ((strcmp(argv[1], "-h")) == OK))
                 help(argv[0]);
             else
                 cout << "Parametros invalidos. Para mas ayuda ejecute: " << argv[0] << " -h o --help" << endl;
 
-            return EXIT_FAILURE;
+            return NOT_OK;
         }
 
-        int attempsCount = 6;
-        char middleDashVec[50];
-        char playedLetters[50];
-        char wordToGuess[50];
-        char middleDashVecReceived[50];
+        int attemps = 6;
+        char middleDashVec[TAM];
+        char playedLetters[TAM];
+        char wordToGuess[TAM];
+        char middleDashVecReceived[TAM];
         char character;
 
         int confirmation = 1;
         int sendConfirmation = 0;
-        int receivedConfirmation = 0;
+        int confirmationReceived = 0;
         int returnStatus = 0;
 
         char *ip;
         int fd, numbytes, port;
-        char buf[100], vectorBuffer[100], playedLettersBuffer[100], wordToGuessBuffer[100];
+        char buf[BUFFER], vecBuffer[BUFFER], playedLettersBuffer[BUFFER], wordToGuessBuffer[BUFFER];
         port = atoi(argv[2]);
         ip = argv[1];
 
@@ -255,62 +277,62 @@ int main(int argc, char *argv[])
 
         if ((he = gethostbyname(ip)) == NULL)
         {
-            printf("Error al obtener nombre del host.\n");
-            exit(-1);
+            printf("Error al obtener host.\n");
+            exit(ERROR);
         }
 
-        if ((fd = socket(AF_INET, SOCK_STREAM, 0)) == -1)
+        if ((fd = socket(AF_INET, SOCK_STREAM, 0)) == ERROR)
         {
-            printf("Error al llamar al socket.\n");
-            exit(-1);
+            printf("Error en funcion socket().\n");
+            exit(ERROR);
         }
 
         server.sin_family = AF_INET;
         server.sin_port = htons(port);
 
-        if (inet_aton(ip, &server.sin_addr) == -1)
+        if (inet_aton(ip, &server.sin_addr) == ERROR)
         {
             printf("Error al conectarse al servidor\n");
-            exit(1);
+            exit(ERROR);
         }
 
         bzero(&(server.sin_zero), 8);
 
         socklen_t lengthSocket = sizeof(struct sockaddr);
 
-        if (connect(fd, (struct sockaddr *)&server, sizeof(server)) == -1)
+        if (connect(fd, (struct sockaddr *)&server, sizeof(server)) == ERROR)
         {
-            printf("ERROR: Dirección de IP errónea, ó servidor no abierto. \n");
-            exit(-1);
+            printf("Error: Dirección de IP errónea, ó servidor no abierto.\n");
+            exit(ERROR);
         }
 
-        if ((numbytes = recv(fd, buf, 100, 0)) == -1)
+        if ((numbytes = recv(fd, buf, BUFFER, 0)) == ERROR)
         {
-            printf("error en funcion recv().\n");
-            exit(-1);
+            printf("error en funcion recv()\n");
+            exit(ERROR);
         }
 
         buf[numbytes] = '\0';
 
         printf("Mensaje del Servidor: %s\n", buf);
 
-        if ((numbytes = recv(fd, vectorBuffer, 100, 0)) == -1)
+        if ((numbytes = recv(fd, vecBuffer, BUFFER, 0)) == ERROR)
         {
-            printf("error en vector de guiones.\n");
-            exit(-1);
+            printf("error en funcion recv().\n");
+            exit(ERROR);
         }
 
-        vectorBuffer[numbytes] = '\0';
+        vecBuffer[numbytes] = '\0';
 
         sendConfirmation = htonl(confirmation);
         send(fd, &sendConfirmation, sizeof(sendConfirmation), 0);
 
-        strcpy(middleDashVec, vectorBuffer);
+        strcpy(middleDashVec, vecBuffer);
 
-        if ((numbytes = recv(fd, playedLettersBuffer, 100, 0)) == -1)
+        if ((numbytes = recv(fd, playedLettersBuffer, BUFFER, 0)) == ERROR)
         {
-            printf("error en letras jugadas.\n");
-            exit(-1);
+            printf("error en funcion recv().\n");
+            exit(ERROR);
         }
 
         playedLettersBuffer[numbytes] = '\0';
@@ -320,67 +342,64 @@ int main(int argc, char *argv[])
         sendConfirmation = htonl(confirmation);
         send(fd, &sendConfirmation, sizeof(sendConfirmation), 0);
 
-        if ((numbytes = recv(fd, wordToGuessBuffer, 100, 0)) == -1)
+        if ((numbytes = recv(fd, wordToGuessBuffer, BUFFER, 0)) == ERROR)
         {
-            printf("error en palabra a adivinar.\n");
-            exit(-1);
+            printf("error en funcion recv().\n");
+            exit(ERROR);
         }
 
         wordToGuessBuffer[numbytes] = '\0';
 
         sendConfirmation = htonl(confirmation);
-
         send(fd, &sendConfirmation, sizeof(sendConfirmation), 0);
 
         strcpy(wordToGuess, wordToGuessBuffer);
 
-        draw(attempsCount);
+        drawHangman(attemps);
 
         showVec(middleDashVec);
 
-        bool dou;
-
-        while (attempsCount > 0 && notGuessedWord(middleDashVec))
+        while (attemps > 0 && notGuessedWord(middleDashVec))
         {
-
             sendConfirmation = htonl(confirmation);
+            
             send(fd, &sendConfirmation, sizeof(sendConfirmation), 0);
 
-            if ((returnStatus = recv(fd, &receivedConfirmation, sizeof(receivedConfirmation), 0)) == -1)
+            if ((returnStatus = recv(fd, &confirmationReceived, sizeof(confirmationReceived), 0)) == ERROR)
             {
                 printf("Error recibiendo confirmacion del caracter.\n");
-                exit(-1);
+                exit(ERROR);
             }
 
-            confirmation = ntohl(receivedConfirmation);
+            confirmation = ntohl(confirmationReceived);
 
-            character = enterCharacter(playedLetters);
+            character = addCharacter(playedLetters);
 
             send(fd, &character, sizeof(char), 0);
 
-            if ((returnStatus = recv(fd, &receivedConfirmation, sizeof(receivedConfirmation), 0)) == -1)
+            if ((returnStatus = recv(fd, &confirmationReceived, sizeof(confirmationReceived), 0)) == ERROR)
             {
                 printf("Error recibiendo confirmacion del caracter.\n");
-                exit(-1);
+                exit(ERROR);
             }
 
-            confirmation = ntohl(receivedConfirmation);
+            confirmation = ntohl(confirmationReceived);
 
-            if ((numbytes = recv(fd, vectorBuffer, sizeof(vectorBuffer), 0)) == -1)
+            if ((numbytes = recv(fd, vecBuffer, sizeof(vecBuffer), 0)) == ERROR)
             {
                 printf("error en funcion recv().\n");
-                exit(-1);
+                exit(ERROR);
             }
 
-            strcpy(middleDashVecReceived, vectorBuffer);
+            strcpy(middleDashVecReceived, vecBuffer);
 
             sendConfirmation = htonl(confirmation);
             send(fd, &sendConfirmation, sizeof(sendConfirmation), 0);
 
-            if ((numbytes = recv(fd, playedLettersBuffer, sizeof(playedLettersBuffer), 0)) == -1)
+            if ((numbytes = recv(fd, playedLettersBuffer, sizeof(playedLettersBuffer), 0)) == ERROR)
             {
                 printf("error en funcion recv().\n");
-                exit(-1);
+                exit(ERROR);
             }
 
             strcpy(playedLetters, playedLettersBuffer);
@@ -390,10 +409,10 @@ int main(int argc, char *argv[])
 
             if (strcmp(middleDashVec, middleDashVecReceived) == 0)
             {
-                attempsCount--;
-                draw(attempsCount);
+                attemps--;
+                drawHangman(attemps);
 
-                printf("No has acertado ninguna letra\nTe quedan %d intentos\n\n", attempsCount);
+                printf("No has acertado ninguna letra\nTe quedan %d intentos.\n\n", attemps);
 
                 showVec(middleDashVec);
             }
@@ -401,21 +420,20 @@ int main(int argc, char *argv[])
             {
                 strcpy(middleDashVec, middleDashVecReceived);
 
-                printf("Has acertado!\nTe quedan (%d) intentos\n\n", attempsCount);
+                printf("Has acertado!\nTe quedan (%d) intentos\n\n", attemps);
 
                 showVec(middleDashVec);
             }
-
         }
 
-        if (attempsCount > 0)
+        if (attemps > 0)
         {
-            printf("Felicidades, has ganado. Te esperamos para una buena revancha!\n");
+            printf("Ganaste! Para cuando la revancha?\n");
         }
         else
         {
-            draw(attempsCount);
-            printf("Perdiste :(. Esta vez gane yo!\n");
+            drawHangman(attemps);
+            printf("Perdiste :( Esta vez gane yo!!\n");
         }
 
         printf("La palabra a adivinar era: %s \n", wordToGuess);
