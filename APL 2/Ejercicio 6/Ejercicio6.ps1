@@ -199,24 +199,31 @@ $name = Split-Path $inputFile -Leaf
 
 $PATH_BASE = $Pwd
 
-if ($InputFile.contains("../")) {
-  $j = ([regex]::Matches($InputFile, "../" )).count
+$test=Resolve-Path -Path $InputFile -ErrorAction SilentlyContinue
 
-  for ($i = 0; $i -lt $j ; $i++) {
-    $PATH_BASE = Split-Path -Path "$PATH_BASE"
-  }
-
-  $InputFile = "$PATH_BASE/$name"
-}
-
-elseif (!($InputFile.contains($PATH_BASE))) {
-  $InputFile = "$PWD/$InputFile"
-}
-
-if(-Not (Test-Path -Path "$InputFile" -PathType Leaf)){
+if($test -eq $null){
   Write-Output "El archivo que se intenta borrar no existe."
   exit
 }
+
+$inputFile=Resolve-Path -Path $InputFile
+# if ($InputFile.contains("../")) {
+#   $j = ([regex]::Matches($InputFile, "../" )).count
+
+#   for ($i = 0; $i -lt $j ; $i++) {
+#     $PATH_BASE = Split-Path -Path "$PATH_BASE"
+#   }
+
+#   $InputFile = "$PATH_BASE/$name"
+# }
+# elseif (!($InputFile.contains($PATH_BASE))) {
+#   $InputFile = "$PWD/$InputFile"
+# }
+
+# if(-Not (Test-Path -Path "$InputFile" -PathType Leaf)){
+#   Write-Output "El archivo que se intenta borrar no existe."
+#   exit
+# }
 
 $PATH_BASE = $inputFile.Split("/")[-1].Split(".")[0]
 
