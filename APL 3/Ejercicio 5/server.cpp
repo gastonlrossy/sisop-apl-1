@@ -49,9 +49,9 @@ int attemps = 6;
 
 string executeCommand(const char *cmd)
 {
-    array<char, 128> buffer;
+    std::array<char, 128> buffer;
     string result;
-    unique_ptr<FILE, decltype(&pclose)> pipe(popen(cmd, "r"), pclose);
+    std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(cmd, "r"), pclose);
 
     if (!pipe)
     {
