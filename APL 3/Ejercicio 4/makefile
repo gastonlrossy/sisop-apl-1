@@ -7,5 +7,5 @@ server4:
 	g++ -o server4.exe server4.cpp -lpthread -lrt
 
 clean:
-	rm client4 server4 /dev/shm/sem.semaforito /dev/shm/clients /dev/shm/sharedMem
+	rm client4 server4 /dev/shm/interaction /dev/shm/clients /dev/shm/sharedMem
 

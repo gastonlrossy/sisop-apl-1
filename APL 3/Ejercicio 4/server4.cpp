@@ -251,14 +251,14 @@ int main(int argc, char *argv[])
       {
         printf("Se ha conectado el cliente! Se inicia el juego del ahorcado.\n");
         string wordFromFile = getRandomWord();
-        char *auxPalAdiv = (data->palabra);
-        auxPalAdiv = const_cast<char *>(wordFromFile.c_str());
-        strcpy(data->palabra, auxPalAdiv);
+        char *auxPalabraAdivinada = (data->palabra);
+        auxPalabraAdivinada = const_cast<char *>(wordFromFile.c_str());
+        strcpy(data->palabra, auxPalabraAdivinada);
         lengthWord = strlen(data->palabra);
-// aca borre int c;
+        int c;
         char *aux = data->guiones;
 
-        for (int c = 0; c < lengthWord; c++)
+        for (c = 0; c < lengthWord; c++)
         {
           *aux = '_';
           aux++;
@@ -298,8 +298,9 @@ int main(int argc, char *argv[])
             sem_wait(sem);
             sem_wait(sem);
           }
-          else
+          else {
             sem_post(sem);
+          }
 
           sem_post(mtx);
         }

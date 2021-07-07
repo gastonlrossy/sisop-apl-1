@@ -54,9 +54,8 @@ void help(string exe)
   cout << "Una vez en el juego elegir una letra a buscar la coincidencias." << endl;
 }
 
-void draw(int intentos){
-
-  switch (intentos)
+void draw(int i){
+  switch (i)
   {
 
   case 0:
@@ -180,15 +179,6 @@ void draw(int intentos){
   }
 }
 
-void showVector(char *v)
-{
-  for (int i = 0; i < strlen(v); i++)
-  {
-    cout << v[i] << " ";
-  }
-  cout << endl;
-}
-
 void killClient(int signal)
 {
   if (signal == SIGINT || signal == SIGUSR1)
@@ -209,12 +199,22 @@ void killClient(int signal)
       cout << "Abandonaste la partida!" << endl;
     int client;
     sem_getvalue(cln, &client);
-    if (client == 1)
+    if (client == 1){
       sem_wait(cln);
+    }
     sem_close(cln);
     sem_close(mtx);
     exit(0);
   }
+}
+
+void showVector(char *v)
+{
+  for (int i = 0; i < strlen(v); i++)
+  {
+    cout << v[i] << " ";
+  }
+  cout << endl;
 }
 
 int main(int argc, char *argv[])
@@ -271,8 +271,8 @@ int main(int argc, char *argv[])
 
   while (semValue > 1)
   {
-    while (data->intentos == -1)
-    {}
+    while (data->intentos == -1){}
+
     cont = 0;
 
     sem_getvalue(sem, &semValue);
@@ -287,7 +287,8 @@ int main(int argc, char *argv[])
         first = false;
       }
 
-      showVector(data->guiones);
+      char* aux=data->guiones;
+      showVector(aux);
       bool jugo = false;
 
       do
@@ -302,8 +303,9 @@ int main(int argc, char *argv[])
         int c = 0;
         while (c < strlen(data->letrasJugadas) && jugo == false)
         {
-          if (toupper(data->letraActual) == toupper(data->letrasJugadas[c]))
+          if (toupper(data->letraActual) == toupper(data->letrasJugadas[c])){
             jugo = true;
+          }
           c++;
         }
       } while (!isalpha(data->letraActual) || jugo == true);
