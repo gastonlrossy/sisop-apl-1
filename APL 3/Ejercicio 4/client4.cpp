@@ -248,7 +248,7 @@ int main(int argc, char *argv[])
     return NOT_OK;
   }
 
-  int fd = shm_open("memoriaCompartida", O_RDWR, 0600);
+  int fd = shm_open("sharedMem", O_RDWR, 0600);
   ftruncate(fd, sizeof(struct shmType));
   struct shmType *data = (struct shmType *)mmap(NULL, sizeof(struct shmType), PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
   close(fd);
