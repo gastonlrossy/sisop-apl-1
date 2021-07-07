@@ -191,7 +191,7 @@ int main(int argc, char *argv[])
     }
   }
 
-  string result = run("ps -fea | grep ./servidor2.exe | wc -l");
+  string result = run("ps -fea | grep ./server4.exe | wc -l");
   int lenghtResult;
   stringstream stream;
   stream << result;
@@ -223,6 +223,8 @@ int main(int argc, char *argv[])
   struct shmType *data = (struct shmType *)mmap(NULL, sizeof(struct shmType), PROT_READ | PROT_WRITE, MAP_SHARED, sM, 0);
   close(sM);
 
+  cout << "Server inicializado!" << endl;
+
   while (serverActive == 1)
   {
 
@@ -236,7 +238,6 @@ int main(int argc, char *argv[])
     sem_getvalue(mtx, &mutex);
 
     data->intentos = -1;
-    cout << "INICIO SERVIDOR  " << semValue << endl;
 
     char *auxPalabra = data->palabra;
     char *auxGuiones = data->guiones;
