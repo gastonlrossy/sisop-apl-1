@@ -1,7 +1,7 @@
 /*
 #####                   APL N3                  #####
 #####		        Ejercicio 4 - Entrega           #####
-#####				        server4.cpp                 #####
+#####				        client4.cpp                 #####
 
 #####			            GRUPO Nº2                 #####
 #####       Tebes, Leandro - 40.227.531         #####
@@ -236,6 +236,7 @@ int main(int argc, char *argv[])
   int semValue = 0;
   int clients;
   int mutex;
+
 
 
   sem = sem_open("interaction", O_RDWR);

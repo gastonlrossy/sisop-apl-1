@@ -55,7 +55,7 @@ string fileInput = "archivo.txt";
 
 void killServer(int signal)
 {
-  if (SIGUSR1 == signal)
+  if (SIGUSR1 == signal || SIGTERM == signal)
   {
 
     int clients;
@@ -75,6 +75,7 @@ void killServer(int signal)
       sem_wait(sem);
       sem_getvalue(sem, &semValue);
     }
+
 
     sem_close(sem);
     sem_close(cln);
@@ -205,6 +206,7 @@ int main(int argc, char *argv[])
 
   signal(SIGINT, SIG_IGN);
   signal(SIGUSR1, killServer);
+  signal(SIGTERM, killServer);
 
   sem_close(sem);
   sem_close(cln);
